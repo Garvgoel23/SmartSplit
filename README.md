@@ -1,8 +1,8 @@
-# SplitWise+
+# SmartSplit
 
-**AI-powered group expense management.** Upload a receipt or just describe an expense in plain language — SplitWise+ extracts, itemizes, categorizes, predicts participants, and optimizes settlements automatically.
+**AI-powered group expense management.** Upload a receipt or just describe an expense in plain language — SmartSplit extracts, itemizes, categorizes, predicts participants, and optimizes settlements automatically.
 
-> *"Just say it or snap it — SplitWise+ does the math."*
+> *"Just say it or snap it — SmartSplit does the math."*
 
 ---
 
@@ -35,7 +35,7 @@
 This is a monorepo:
 
 ```
-splitwise-plus/
+SmartSplit/
 ├── client/       # Next.js frontend
 ├── server/       # Express backend (API, sockets, business logic)
 ├── ai-service/   # Gemini-based AI microservice
@@ -62,54 +62,6 @@ splitwise-plus/
 # Clone the repo
 git clone https://github.com/Garvgoel23/SmartSplit.git
 cd SmartSplit
-
-# Install dependencies for all workspaces
-npm install
-```
-
-### Environment Variables
-
-Create a `.env` file in `server/` and `ai-service/` (see `.env.example` in each):
-
-```bash
-# server/.env
-MONGODB_URI=mongodb://localhost:27017/splitwise-plus
-CLERK_SECRET_KEY=your_clerk_secret_key
-CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
-AI_SERVICE_URL=http://localhost:5001
-PORT=5000
-
-# ai-service/.env
-GEMINI_API_KEY=your_gemini_api_key
-PORT=5001
-
-# client/.env.local
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
-NEXT_PUBLIC_API_URL=http://localhost:5000
-```
-
-### Run with Docker Compose
-
-```bash
-docker compose -f docker/docker-compose.yml up --build
-```
-
-### Run Locally (without Docker)
-
-```bash
-# Terminal 1 — backend
-cd server && npm run dev
-
-# Terminal 2 — AI service
-cd ai-service && npm run dev
-
-# Terminal 3 — frontend
-cd client && npm run dev
-```
-
-The app should now be running at `http://localhost:3000`.
-
----
 
 ## 🧩 Core Modules
 
