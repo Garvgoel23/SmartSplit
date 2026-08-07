@@ -121,31 +121,6 @@ The app should now be running at `http://localhost:3000`.
 
 ---
 
-## 🗺️ Roadmap
-
-- [ ] AI Travel Planner chatbot (itinerary generation, budgeting, recommendations)
-- [ ] Multi-currency support with live FX conversion
-- [ ] In-app payment settlement (UPI, Stripe, Venmo)
-- [ ] Recurring/subscription expense automation
-- [ ] Native mobile apps (iOS/Android)
-
----
-
-## 🤝 Contributing
-
-1. Fork the repo and create a feature branch (`git checkout -b feature/your-feature`)
-2. Commit your changes with clear messages
-3. Push and open a pull request against `main`
-4. Ensure lint/tests pass before requesting review
-
----
-
 ## 📄 License
 
-This project is licensed under the MIT License. See `LICENSE` for details.
-
----
-
-## 📚 Documentation
-
-Full product requirements are available in [`docs/SplitWisePlus_PRD.md`](docs/SplitWisePlus_PRD.md).
+This project is licensed under the MIT License. See `LICENSE` for details
