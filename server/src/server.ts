@@ -1,10 +1,11 @@
 import express from "express";
 import dotenv from "dotenv";
+import path from "path";
 import cors from "cors";
 import { connectDB } from "./config/db.js";
 import groupRoutes from "./routes/group.routes.js";
 
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 const app = express();
 const PORT = process.env.PORT || 5050;
