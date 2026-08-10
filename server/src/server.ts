@@ -4,6 +4,8 @@ import path from "path";
 import cors from "cors";
 import { connectDB } from "./config/db.js";
 import groupRoutes from "./routes/group.routes.js";
+import userRoutes from "./routes/user.routes.js";
+import { errorHandler } from "./middleware/error.middleware.js";
 
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
@@ -14,10 +16,13 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/api/groups", groupRoutes);
+app.use("/api/users", userRoutes);
 
 app.get("/health", (_req, res) => {
   res.json({ status: "ok", message: "Server is operational" });
 });
+
+app.use(errorHandler);
 
 const startServer = async () => {
   await connectDB();
