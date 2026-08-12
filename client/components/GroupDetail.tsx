@@ -1,7 +1,9 @@
+'use client';
+
 import React, { useState } from 'react';
 import axios from 'axios';
 import { ArrowLeft, UserPlus, Trash2, Mail, User, Shield, Users, Phone } from 'lucide-react';
-import { Group } from '../App';
+import { Group } from './types';
 
 interface Props {
   group: Group;
@@ -39,7 +41,7 @@ const GroupDetail: React.FC<Props> = ({ group, onBack, onMemberAdded, onMemberRe
       setNewMemberEmail('');
       setNewMemberPhone('');
       setError('');
-    } catch (err) {
+    } catch {
       setError('Failed to add member');
     } finally {
       setIsAddingMember(false);
@@ -52,7 +54,7 @@ const GroupDetail: React.FC<Props> = ({ group, onBack, onMemberAdded, onMemberRe
     try {
       const res = await axios.delete(`${apiUrl}/${group._id}/members/${memberId}`);
       onMemberRemoved(res.data.data);
-    } catch (err) {
+    } catch {
       alert('Failed to remove member');
     }
   };
@@ -63,7 +65,7 @@ const GroupDetail: React.FC<Props> = ({ group, onBack, onMemberAdded, onMemberRe
     try {
       await axios.delete(`${apiUrl}/${group._id}`);
       onGroupDeleted();
-    } catch (err) {
+    } catch {
       alert('Failed to delete group');
     }
   };

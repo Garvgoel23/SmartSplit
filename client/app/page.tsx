@@ -1,28 +1,16 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Plus, Users } from 'lucide-react';
-import CreateGroupModal from './components/CreateGroupModal';
-import GroupList from './components/GroupList';
-import GroupDetail from './components/GroupDetail';
+import CreateGroupModal from '../components/CreateGroupModal';
+import GroupList from '../components/GroupList';
+import GroupDetail from '../components/GroupDetail';
+import { Group } from '../components/types';
 
-export interface Member {
-  _id: string;
-  name: string;
-  email: string;
-  role: 'admin' | 'member';
-}
+const API_URL = process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL}/groups` : 'http://localhost:5050/api/groups';
 
-export interface Group {
-  _id: string;
-  name: string;
-  description: string;
-  members: Member[];
-  createdAt: string;
-}
-
-const API_URL = 'http://localhost:5050/api/groups';
-
-function App() {
+export default function HomePage() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -119,5 +107,3 @@ function App() {
     </div>
   );
 }
-
-export default App;
