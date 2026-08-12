@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { ArrowLeft, UserPlus, Trash2, Mail, User, Shield, Users } from 'lucide-react';
+import { ArrowLeft, UserPlus, Trash2, Mail, User, Shield, Users, Phone } from 'lucide-react';
 import { Group } from '../App';
 
 interface Props {
@@ -15,6 +15,7 @@ interface Props {
 const GroupDetail: React.FC<Props> = ({ group, onBack, onMemberAdded, onMemberRemoved, onGroupDeleted, apiUrl }) => {
   const [newMemberName, setNewMemberName] = useState('');
   const [newMemberEmail, setNewMemberEmail] = useState('');
+  const [newMemberPhone, setNewMemberPhone] = useState('');
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [error, setError] = useState('');
 
@@ -30,11 +31,13 @@ const GroupDetail: React.FC<Props> = ({ group, onBack, onMemberAdded, onMemberRe
       const res = await axios.post(`${apiUrl}/${group._id}/members`, {
         name: newMemberName,
         email: newMemberEmail,
+        phone: newMemberPhone,
         role: 'member'
       });
       onMemberAdded(res.data.data);
       setNewMemberName('');
       setNewMemberEmail('');
+      setNewMemberPhone('');
       setError('');
     } catch (err) {
       setError('Failed to add member');
@@ -160,6 +163,21 @@ const GroupDetail: React.FC<Props> = ({ group, onBack, onMemberAdded, onMemberRe
                   placeholder="john@example.com"
                   value={newMemberEmail}
                   onChange={(e) => setNewMemberEmail(e.target.value)}
+                  style={{ paddingLeft: '2.5rem', width: '100%' }}
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Phone (Optional)</label>
+              <div style={{ position: 'relative' }}>
+                <Phone size={16} style={{ position: 'absolute', left: '12px', top: '14px', color: 'var(--text-secondary)' }} />
+                <input 
+                  className="form-input" 
+                  type="tel" 
+                  placeholder="+1 (555) 000-0000"
+                  value={newMemberPhone}
+                  onChange={(e) => setNewMemberPhone(e.target.value)}
                   style={{ paddingLeft: '2.5rem', width: '100%' }}
                 />
               </div>
