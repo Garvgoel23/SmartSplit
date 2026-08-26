@@ -7,6 +7,7 @@ import groupRoutes from "./routes/group.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import expenseRoutes from "./routes/expense.routes.js";
 import ocrRoutes from "./routes/ocr.routes.js";
+import currencyRoutes from "./routes/currency.routes.js";
 import { errorHandler } from "./middleware/error.middleware.js";
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env") });
@@ -21,6 +22,7 @@ app.use("/api/groups", groupRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/expenses", expenseRoutes);
 app.use("/api/ai", ocrRoutes);
+app.use("/api/currencies", currencyRoutes);
 
 app.get("/health", (_req, res) => {
   res.json({ status: "ok", message: "Server is operational" });
