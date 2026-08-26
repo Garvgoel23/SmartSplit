@@ -17,6 +17,7 @@ import {
   removeReceiptHash,
 } from "./duplicateDetection.service.js";
 import { convertCurrency } from "./currency.service.js";
+import { emitToGroup } from "../socket.js";
 
 interface CreateExpenseInput {
   groupId: string;
@@ -186,10 +187,13 @@ export const createExpense = async (input: CreateExpenseInput): Promise<IExpense
       );
     }
 
-    return expense.populate([
+    const populated = await expense.populate([
       { path: "paidBy", select: "name email avatarUrl" },
       { path: "splits.user", select: "name email avatarUrl" },
     ]);
+
+    emitToGroup(groupId, "expense:created", populated);
+    return populated;
   } finally {
     await session.endSession();
   }
@@ -299,7 +303,9 @@ export const deleteExpense = async (expenseId: string): Promise<void> => {
         session,
       });
 
+      const groupId = expense.group.toString();
       await expense.deleteOne({ session });
+      emitToGroup(groupId, "expense:deleted", { expenseId, groupId });
     });
 
     // Clean up the receipt hash record (best-effort)
