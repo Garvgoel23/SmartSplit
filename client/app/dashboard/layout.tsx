@@ -1,9 +1,26 @@
+'use client';
+
 import React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { LayoutDashboard, Clock, Users, Settings, LogOut, Plus, Bell, HelpCircle } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+
+  const getLinkClass = (path: string) => {
+    const isActive = pathname === path || (path !== '/dashboard' && pathname.startsWith(path));
+    return isActive 
+      ? "flex items-center gap-3 px-3 py-2 rounded-lg bg-white/5 text-white text-sm font-medium border border-white/5"
+      : "flex items-center gap-3 px-3 py-2 rounded-lg text-white/60 hover:text-white hover:bg-white/5 text-sm font-medium transition-colors";
+  };
+
+  const getIconClass = (path: string) => {
+    const isActive = pathname === path || (path !== '/dashboard' && pathname.startsWith(path));
+    return isActive ? "w-4 h-4 text-white/70" : "w-4 h-4";
+  };
+
   return (
     <div className="flex h-screen bg-[#0a0a0a] text-white font-sans overflow-hidden">
       {/* Sidebar */}
@@ -21,14 +38,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </Link>
 
             <nav className="flex flex-col gap-1.5">
-              <Link href="/dashboard" className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/5 text-white text-sm font-medium border border-white/5">
-                <LayoutDashboard className="w-4 h-4 text-white/70" /> Dashboard
+              <Link href="/dashboard" className={getLinkClass("/dashboard")}>
+                <LayoutDashboard className={getIconClass("/dashboard")} /> Dashboard
               </Link>
-              <Link href="/dashboard/activity" className="flex items-center gap-3 px-3 py-2 rounded-lg text-white/60 hover:text-white hover:bg-white/5 text-sm font-medium transition-colors">
-                <Clock className="w-4 h-4" /> Recent Activity
+              <Link href="/dashboard/activity" className={getLinkClass("/dashboard/activity")}>
+                <Clock className={getIconClass("/dashboard/activity")} /> Recent Activity
               </Link>
-              <Link href="/dashboard/groups" className="flex items-center gap-3 px-3 py-2 rounded-lg text-white/60 hover:text-white hover:bg-white/5 text-sm font-medium transition-colors">
-                <Users className="w-4 h-4" /> Groups
+              <Link href="/dashboard/groups" className={getLinkClass("/dashboard/groups")}>
+                <Users className={getIconClass("/dashboard/groups")} /> Groups
               </Link>
             </nav>
           </div>
