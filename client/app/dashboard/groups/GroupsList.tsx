@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Home, Plane, Utensils, LayoutGrid, List, Plus, Settings } from 'lucide-react';
 import CreateGroupModal from '@/components/CreateGroupModal';
 import { useAuth } from '@clerk/nextjs';
+import Link from 'next/link';
 
 export default function GroupsList({ initialGroups }: { initialGroups: any[] }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -62,7 +63,7 @@ export default function GroupsList({ initialGroups }: { initialGroups: any[] }) 
         
         {/* Group Cards */}
         {initialGroups.map(group => (
-          <div key={group.id} className="bg-[#121214] border border-white/10 rounded-2xl p-6 flex flex-col justify-between hover:border-white/20 transition-all group">
+          <Link href={`/dashboard/groups/${group.id}`} key={group.id} className="bg-[#121214] border border-white/10 rounded-2xl p-6 flex flex-col justify-between hover:border-white/20 transition-all group cursor-pointer block">
             <div>
               <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/70 mb-5 group-hover:bg-white/10 transition-colors">
                 {getCategoryIcon(group.category)}
@@ -97,7 +98,7 @@ export default function GroupsList({ initialGroups }: { initialGroups: any[] }) 
                 )}
               </div>
             </div>
-          </div>
+          </Link>
         ))}
 
         {/* Create New Group Card */}
