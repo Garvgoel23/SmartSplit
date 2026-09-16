@@ -1,22 +1,49 @@
 import React from 'react';
+import { auth } from '@clerk/nextjs/server';
+import DashboardView from './DashboardView';
 
-export default function DashboardPlaceholder() {
+export default async function DashboardPage() {
+  const { getToken } = await auth();
+  const token = await getToken();
+  
+  let financialData = null;
+
+  try {
+    const res = await fetch('http://127.0.0.1:5050/api/users/me/financial-overview', {
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      cache: 'no-store'
+    });
+    
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success) {
+        financialData = data.data;
+      }
+    } else {
+      console.error("Backend error:", await res.text());
+    }
+  } catch (error) {
+    console.error("Failed to fetch dashboard data:", error);
+  }
+
+  // Fallback data if backend is unreachable
+  if (!financialData) {
+    financialData = {
+      totalBalance: 0,
+      youOwe: 0,
+      youAreOwed: 0,
+      groupsOwedCount: 0,
+      friendsOwedCount: 0,
+      recentBalances: []
+    };
+  }
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-      <div className="w-24 h-24 mb-6 relative">
-        <div className="absolute inset-0 bg-[#b2f5d1]/20 rounded-full blur-xl animate-pulse"></div>
-        <div className="relative w-full h-full bg-[#121214] border-2 border-white/10 rounded-full flex items-center justify-center shadow-2xl">
-          <svg className="w-10 h-10 text-[#b2f5d1]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-        </div>
-      </div>
-      <h1 className="text-3xl font-bold text-white mb-3 tracking-tight">Dashboard V2 Coming Soon</h1>
-      <p className="text-white/50 max-w-md mx-auto">
-        We're working on a brand new dashboard experience. In the meantime, you can access your profile and balances from the 
-        <span className="text-[#b2f5d1] font-semibold mx-1">Profile</span> 
-        tab in the sidebar.
-      </p>
+    <div className="max-w-6xl mx-auto h-full">
+      <h1 className="text-3xl font-bold text-white tracking-tight mb-8">Financial Overview</h1>
+      <DashboardView initialData={financialData} />
     </div>
   );
 }

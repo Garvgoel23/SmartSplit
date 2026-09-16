@@ -73,25 +73,33 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto relative bg-[#0a0a0a]">
         {/* Top Navbar */}
-        <header className="h-16 flex items-center justify-between px-8 border-b border-white/5 shrink-0 sticky top-0 bg-[#0a0a0a]/80 backdrop-blur-md z-10">
-          <h1 className="text-lg font-semibold text-white/90">SmartSplit Dashboard</h1>
+        <header className="h-16 flex items-center justify-between px-8 border-b border-white/5 shrink-0 sticky top-0 bg-[#0a0a0a]/80 backdrop-blur-md z-20">
+          <div className="flex items-center gap-6">
+            <Link href="/dashboard" className="text-sm font-bold text-white border-b-2 border-[#b2f5d1] pb-5 translate-y-[10px]">Overview</Link>
+            <Link href="#" className="text-sm font-medium text-white/50 hover:text-white transition-colors">Settlements</Link>
+            <Link href="#" className="text-sm font-medium text-white/50 hover:text-white transition-colors">Reports</Link>
+            <Link href="#" className="text-sm font-medium text-white/50 hover:text-white transition-colors">Settings</Link>
+          </div>
           
           <div className="flex items-center gap-4">
             <div className="relative">
-              <input type="text" placeholder="Search..." className="bg-white/5 border border-white/10 rounded-full py-1 pl-8 pr-3 text-xs text-white focus:outline-none focus:border-white/20 w-48" />
-              <svg className="w-3.5 h-3.5 text-white/50 absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              <input type="text" placeholder="Search transactions..." className="bg-transparent border border-white/10 rounded-full py-1.5 pl-4 pr-10 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-white/20 w-56 transition-colors" />
             </div>
             
-            <button className="text-white/50 hover:text-white transition-colors">
-              <Bell className="w-4 h-4" />
+            <button className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-white/50 hover:text-white hover:border-white/20 transition-all">
+              <Bell className="w-3.5 h-3.5" />
             </button>
-            <button className="text-white/50 hover:text-white transition-colors">
-              <HelpCircle className="w-4 h-4" />
+            <button className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-white/50 hover:text-white hover:border-white/20 transition-all">
+              <HelpCircle className="w-3.5 h-3.5" />
             </button>
-            <button className="bg-[#b2f5d1]/20 hover:bg-[#b2f5d1]/30 text-[#b2f5d1] border border-[#b2f5d1]/30 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors">
-              Quick Split
+            <button className="bg-white/5 hover:bg-white/10 border border-white/10 rounded-full px-4 py-1.5 text-xs font-bold text-white transition-all flex items-center gap-1.5">
+              <svg className="w-3 h-3 text-[#b2f5d1]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg> Quick Split
             </button>
-            <UserButton appearance={{ elements: { avatarBox: "w-8 h-8" } }} />
+            <div className="pl-2 border-l border-white/10">
+              <UserButton appearance={{ elements: { avatarBox: "w-8 h-8 rounded-full border border-white/10" } }} />
+            </div>
           </div>
         </header>
 
