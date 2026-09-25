@@ -30,6 +30,7 @@ export default function GroupDetailsView({
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { group, balances, settlements, distribution } = groupData;
@@ -126,13 +127,16 @@ export default function GroupDetailsView({
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(group.inviteCode);
-                  alert(`Invite code ${group.inviteCode} copied to clipboard!`);
+                  setCopiedCode(true);
+                  setTimeout(() => setCopiedCode(false), 2000);
                 }}
                 className="px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs font-mono font-bold text-[#27ff9a] tracking-wider transition-colors cursor-pointer flex items-center gap-1.5"
                 title="Click to copy invite code"
               >
                 {group.inviteCode}
-                <span className="text-[10px] text-white/40 font-sans font-normal">(copy)</span>
+                <span className="text-[10px] text-white/40 font-sans font-normal">
+                  {copiedCode ? "(copied!)" : "(copy)"}
+                </span>
               </button>
             </div>
           )}

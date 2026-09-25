@@ -4,6 +4,7 @@ import {
   getGroups,
   getGroupById,
   getGroupDetails,
+  getOrGenerateInviteCode,
   addMember,
   removeMember,
   deleteGroup,
@@ -19,6 +20,8 @@ router.post("/join", requireAuth, joinGroupByCode);
 router.get("/", requireAuth, getGroups);
 router.get("/:id", requireAuth, getGroupById);
 router.get("/:id/details", requireAuth, getGroupDetails);
+router.get("/:id/invite-code", requireAuth, getOrGenerateInviteCode);
+router.post("/:id/invite-code", requireAuth, getOrGenerateInviteCode);
 router.get("/:id/messages", requireAuth, getGroupMessages);
 router.delete("/:id", requireAuth, deleteGroup);
 router.post("/:id/members", requireAuth, addMember);

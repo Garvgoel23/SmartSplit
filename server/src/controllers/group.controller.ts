@@ -1,11 +1,9 @@
 import { Request, Response } from "express";
-import { Group } from "../models/Group.js";
+import { Group, generateInviteCode, ensureGroupInviteCode } from "../models/Group.js";
 import { User } from "../models/User.js";
 import { Expense } from "../models/Expense.js";
 import { calculateSettlements } from "../utils/debtCalculator.js";
 import { emitToGroup } from "../socket.js";
-
-const generateInviteCode = () => Math.random().toString(36).substring(2, 8).toUpperCase();
 
 export const createGroup = async (req: Request, res: Response) => {
   try {
@@ -53,7 +51,12 @@ export const createGroup = async (req: Request, res: Response) => {
       });
     }
 
-    const inviteCode = generateInviteCode();
+    let inviteCode = generateInviteCode();
+    let existingCode = await Group.findOne({ inviteCode });
+    while (existingCode) {
+      inviteCode = generateInviteCode();
+      existingCode = await Group.findOne({ inviteCode });
+    }
 
     const group = await Group.create({
       name,
@@ -65,6 +68,7 @@ export const createGroup = async (req: Request, res: Response) => {
 
     return res.status(201).json({ success: true, data: group });
   } catch (error) {
+    console.error("Failed to create group:", error);
     return res.status(500).json({ error: "Failed to create group" });
   }
 };
@@ -72,55 +76,75 @@ export const createGroup = async (req: Request, res: Response) => {
 export const joinGroupByCode = async (req: Request, res: Response) => {
   try {
     const { inviteCode } = req.body;
-    const userId = (req as any).user.id;
+    const userId = (req as any).user?.id;
 
-    if (!inviteCode) {
-      return res.status(400).json({ error: "Invite code is required" });
+    if (!inviteCode || typeof inviteCode !== "string") {
+      return res.status(400).json({ success: false, error: "Invite code is required" });
     }
 
-    const group = await Group.findOne({ inviteCode: inviteCode.toUpperCase() });
+    const cleanCode = inviteCode.trim().toUpperCase();
+    const group = await Group.findOne({ inviteCode: cleanCode });
+
     if (!group) {
-      return res.status(404).json({ error: "Invalid invite code" });
+      return res.status(404).json({ success: false, error: "Invalid invite code. Group not found." });
     }
 
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(401).json({ error: "User not found" });
+      return res.status(404).json({ success: false, error: "User not found" });
     }
 
-    const isMember = group.members.some(m => m.email === user.email || m.phone === user.phone || (m._id && m._id.toString() === userId));
-    
+    const isMember = group.members.some(
+      (m) =>
+        (m.email && m.email.toLowerCase() === user.email.toLowerCase()) ||
+        (user.phone && m.phone && m.phone === user.phone) ||
+        m.name.toLowerCase() === user.fullName.toLowerCase() ||
+        (m._id && m._id.toString() === userId)
+    );
+
     if (isMember) {
-      return res.status(400).json({ error: "You are already a member of this group" });
+      return res.status(400).json({
+        success: false,
+        error: "You are already a member of this group.",
+        data: group,
+      });
     }
 
     const newMember = {
-      name: user.fullName || user.preferredName || "Unknown",
+      name: user.fullName || user.preferredName || "Member",
       email: user.email,
       phone: user.phone || "",
       role: "member" as const,
-      joinedAt: new Date()
+      joinedAt: new Date(),
     };
 
     group.members.push(newMember);
     await group.save();
 
-    // Broadcast to the group via Socket.io
     emitToGroup(group._id.toString(), "member-joined", {
       group: group._id,
       member: newMember
     });
 
-    return res.status(200).json({ success: true, data: group });
-  } catch (error) {
-    console.error("Error joining group by code:", error);
-    return res.status(500).json({ error: "Failed to join group" });
+    return res.status(200).json({
+      success: true,
+      message: `Successfully joined ${group.name}!`,
+      data: group,
+    });
+  } catch (error: any) {
+    console.error("Join group error:", error);
+    return res.status(500).json({ success: false, error: error.message || "Failed to join group" });
   }
 };
 
 export const getGroups = async (_req: Request, res: Response) => {
   try {
     const groups = await Group.find().sort({ createdAt: -1 });
+    for (const group of groups) {
+      if (!group.inviteCode) {
+        await ensureGroupInviteCode(group);
+      }
+    }
     return res.json({ success: true, data: groups });
   } catch (error) {
     return res.status(500).json({ error: "Failed to fetch groups" });
@@ -135,9 +159,28 @@ export const getGroupById = async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Group not found" });
     }
 
+    if (!group.inviteCode) {
+      await ensureGroupInviteCode(group);
+    }
+
     return res.json({ success: true, data: group });
   } catch (error) {
     return res.status(500).json({ error: "Invalid group ID or server error" });
+  }
+};
+
+export const getOrGenerateInviteCode = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const group = await Group.findById(id);
+    if (!group) {
+      return res.status(404).json({ success: false, error: "Group not found" });
+    }
+
+    const inviteCode = await ensureGroupInviteCode(group);
+    return res.json({ success: true, inviteCode });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, error: error.message || "Failed to generate invite code" });
   }
 };
 
@@ -232,6 +275,11 @@ export const getGroupDetails = async (req: Request, res: Response) => {
     const group = await Group.findById(id);
     if (!group) return res.status(404).json({ error: "Group not found" });
 
+    // Ensure invite code is present
+    if (!group.inviteCode) {
+      await ensureGroupInviteCode(group);
+    }
+
     // Validate user is in group
     const user = await User.findById(userId);
     if (!user) return res.status(401).json({ error: "User not found" });
@@ -245,7 +293,6 @@ export const getGroupDetails = async (req: Request, res: Response) => {
 
     // Initialize map with all members
     for (const member of group.members) {
-      // Find the corresponding User document to use object ID as the key, since Expenses use User IDs.
       const memberUser = await User.findOne({ 
         $or: [
           { email: member.email },
@@ -265,14 +312,11 @@ export const getGroupDetails = async (req: Request, res: Response) => {
       exp.splits.forEach(split => {
         const splitUserId = split.user.toString();
         
-        // Payer is owed this amount by the split user
         if (payerId !== splitUserId) {
-          // Payer gains (is owed)
           if (balancesMap.has(payerId)) {
             balancesMap.get(payerId)!.netAmount += split.amount;
           }
           
-          // Split user loses (owes)
           if (balancesMap.has(splitUserId)) {
             balancesMap.get(splitUserId)!.netAmount -= split.amount;
           }
@@ -288,7 +332,6 @@ export const getGroupDetails = async (req: Request, res: Response) => {
 
     const settlements = calculateSettlements(balances);
     
-    // Group Balance Distribution (Owed vs Paid for the specific user)
     let userOwed = 0;
     let userPaid = 0;
     
@@ -309,7 +352,6 @@ export const getGroupDetails = async (req: Request, res: Response) => {
         group: {
           id: group._id,
           name: group.name,
-          inviteCode: group.inviteCode,
           category: (group as any).category || 'GENERAL',
           memberCount: group.members.length,
           inviteCode: group.inviteCode,
@@ -330,63 +372,3 @@ export const getGroupDetails = async (req: Request, res: Response) => {
     return res.status(500).json({ error: "Failed to fetch group details" });
   }
 };
-
-export const joinGroupByCode = async (req: Request, res: Response) => {
-  try {
-    const { inviteCode } = req.body;
-    const userId = (req as any).user?.id;
-
-    if (!inviteCode || typeof inviteCode !== "string") {
-      return res.status(400).json({ success: false, error: "Invite code is required" });
-    }
-
-    const cleanCode = inviteCode.trim().toUpperCase();
-    const group = await Group.findOne({ inviteCode: cleanCode });
-
-    if (!group) {
-      return res.status(404).json({ success: false, error: "Invalid invite code. Group not found." });
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ success: false, error: "User not found" });
-    }
-
-    // Check if user is already a member
-    const alreadyMember = group.members.some(
-      (m) =>
-        (m.email && m.email.toLowerCase() === user.email.toLowerCase()) ||
-        (user.phone && m.phone && m.phone === user.phone) ||
-        m.name.toLowerCase() === user.fullName.toLowerCase()
-    );
-
-    if (alreadyMember) {
-      return res.status(400).json({
-        success: false,
-        error: "You are already a member of this group.",
-        data: group,
-      });
-    }
-
-    // Add user as member
-    group.members.push({
-      name: user.fullName || user.preferredName || "Member",
-      email: user.email,
-      phone: user.phone || "",
-      role: "member",
-      joinedAt: new Date(),
-    });
-
-    await group.save();
-
-    return res.status(200).json({
-      success: true,
-      message: `Successfully joined ${group.name}!`,
-      data: group,
-    });
-  } catch (error: any) {
-    console.error("Join group error:", error);
-    return res.status(500).json({ success: false, error: error.message || "Failed to join group" });
-  }
-};
-

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { User } from "../models/User.js";
-import { Group } from "../models/Group.js";
+import { Group, ensureGroupInviteCode } from "../models/Group.js";
 import { Expense } from "../models/Expense.js";
 
 export const createUser = async (req: Request, res: Response) => {
@@ -244,6 +244,12 @@ export const getUserGroups = async (req: Request, res: Response) => {
         { "members.phone": userPhone }
       ]
     });
+
+    for (const group of userGroups) {
+      if (!group.inviteCode) {
+        await ensureGroupInviteCode(group);
+      }
+    }
 
     const groupIds = userGroups.map(g => g._id);
     const allExpenses = await Expense.find({ group: { $in: groupIds } });
@@ -713,7 +719,7 @@ export const removeFriend = async (req: Request, res: Response) => {
     await currentUser.save();
 
     if (targetUser) {
-      targetUser.friends = targetUser.friends.filter(id => id.toString() !== currentUser._id.toString());
+      targetUser.friends = (targetUser.friends || []).filter(id => id.toString() !== currentUser._id.toString());
       await targetUser.save();
     }
 
