@@ -6,16 +6,30 @@ export interface IUser extends Document {
   preferredName?: string;
   email: string;
   password?: string;
+  clerkId?: string;
   phone?: string;
+  isPhoneVerified?: boolean;
   avatar?: string;
-
-  linkedAccounts?: any;
-  security?: any;
-  preferences?: any;
-
+  friends?: mongoose.Types.ObjectId[];
+  linkedAccounts?: {
+    venmo?: string;
+    cashApp?: string;
+    paypal?: string;
+    upi?: string;
+  } | any;
+  security?: {
+    twoFactorEnabled?: boolean;
+    passwordLastChangedAt?: Date;
+  } | any;
+  preferences?: {
+    currency?: string;
+    theme?: string;
+    acousticFeedback?: boolean;
+    compactDensity?: boolean;
+    liveForex?: boolean;
+  } | any;
   createdAt: Date;
   updatedAt: Date;
-
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -27,13 +41,11 @@ const userSchema = new Schema<IUser>(
       trim: true,
       default: "",
     },
-
     preferredName: {
       type: String,
       trim: true,
       default: "",
     },
-
     email: {
       type: String,
       required: true,
@@ -42,33 +54,42 @@ const userSchema = new Schema<IUser>(
       trim: true,
       index: true,
     },
-
     password: {
       type: String,
       select: false,
     },
-
+    clerkId: {
+      type: String,
+      default: "",
+      index: true,
+    },
     phone: {
       type: String,
       default: "",
       trim: true,
     },
-
+    isPhoneVerified: {
+      type: Boolean,
+      default: false,
+    },
     avatar: {
       type: String,
       default: "",
     },
-
+    friends: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
     linkedAccounts: {
       type: Schema.Types.Mixed,
       default: {},
     },
-
     security: {
       type: Schema.Types.Mixed,
       default: {},
     },
-
     preferences: {
       type: Schema.Types.Mixed,
       default: {

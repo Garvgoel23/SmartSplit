@@ -47,6 +47,7 @@ const GroupSchema = new Schema<IGroup>({
     uppercase: true,
     trim: true,
     index: true,
+    default: generateInviteCode,
   },
   members: [MemberSchema],
   createdBy: { type: String, default: "system" },
@@ -54,18 +55,58 @@ const GroupSchema = new Schema<IGroup>({
 });
 
 // Automatically ensure unique invite code on save
-GroupSchema.pre("save", async function (next) {
-  if (!this.inviteCode) {
+GroupSchema.pre("save", async function () {
+  if (!this.inviteCode || this.inviteCode.trim() === "") {
     let unique = false;
     let newCode = "";
+    const GroupModel = (this.constructor as mongoose.Model<IGroup>) || mongoose.models.Group;
     while (!unique) {
       newCode = generateInviteCode();
-      const existing = await mongoose.models.Group.findOne({ inviteCode: newCode });
-      if (!existing) unique = true;
+      const existing = await GroupModel.findOne({ inviteCode: newCode });
+      if (!existing || existing._id.equals((this as any)._id)) {
+        unique = true;
+      }
     }
     this.inviteCode = newCode;
   }
-  next();
 });
 
 export const Group = mongoose.model<IGroup>("Group", GroupSchema);
+
+export async function ensureGroupInviteCode(group: IGroup): Promise<string> {
+  if (group.inviteCode && group.inviteCode.trim() !== "") {
+    return group.inviteCode;
+  }
+  let unique = false;
+  let newCode = "";
+  while (!unique) {
+    newCode = generateInviteCode();
+    const existing = await Group.findOne({ inviteCode: newCode });
+    if (!existing) unique = true;
+  }
+  group.inviteCode = newCode;
+  await group.save();
+  return newCode;
+}
+
+export async function ensureAllGroupsHaveInviteCodes(): Promise<void> {
+  try {
+    const groupsWithoutCode = await Group.find({
+      $or: [
+        { inviteCode: { $exists: false } },
+        { inviteCode: null },
+        { inviteCode: "" }
+      ]
+    });
+
+    if (groupsWithoutCode.length === 0) return;
+
+    console.log(`[Auto-Migration] Found ${groupsWithoutCode.length} groups without invite code. Generating...`);
+    for (const grp of groupsWithoutCode) {
+      await ensureGroupInviteCode(grp);
+    }
+    console.log(`[Auto-Migration] All ${groupsWithoutCode.length} groups now have unique invite codes.`);
+  } catch (error) {
+    console.error("[Auto-Migration] Error ensuring invite codes for existing groups:", error);
+  }
+}
