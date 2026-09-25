@@ -241,6 +241,7 @@ export const getGroupDetails = async (req: Request, res: Response) => {
           name: group.name,
           category: (group as any).category || 'GENERAL',
           memberCount: group.members.length,
+          inviteCode: group.inviteCode,
           members: group.members
         },
         balances,
@@ -258,3 +259,63 @@ export const getGroupDetails = async (req: Request, res: Response) => {
     return res.status(500).json({ error: "Failed to fetch group details" });
   }
 };
+
+export const joinGroupByCode = async (req: Request, res: Response) => {
+  try {
+    const { inviteCode } = req.body;
+    const userId = (req as any).user?.id;
+
+    if (!inviteCode || typeof inviteCode !== "string") {
+      return res.status(400).json({ success: false, error: "Invite code is required" });
+    }
+
+    const cleanCode = inviteCode.trim().toUpperCase();
+    const group = await Group.findOne({ inviteCode: cleanCode });
+
+    if (!group) {
+      return res.status(404).json({ success: false, error: "Invalid invite code. Group not found." });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+
+    // Check if user is already a member
+    const alreadyMember = group.members.some(
+      (m) =>
+        (m.email && m.email.toLowerCase() === user.email.toLowerCase()) ||
+        (user.phone && m.phone && m.phone === user.phone) ||
+        m.name.toLowerCase() === user.fullName.toLowerCase()
+    );
+
+    if (alreadyMember) {
+      return res.status(400).json({
+        success: false,
+        error: "You are already a member of this group.",
+        data: group,
+      });
+    }
+
+    // Add user as member
+    group.members.push({
+      name: user.fullName || user.preferredName || "Member",
+      email: user.email,
+      phone: user.phone || "",
+      role: "member",
+      joinedAt: new Date(),
+    });
+
+    await group.save();
+
+    return res.status(200).json({
+      success: true,
+      message: `Successfully joined ${group.name}!`,
+      data: group,
+    });
+  } catch (error: any) {
+    console.error("Join group error:", error);
+    return res.status(500).json({ success: false, error: error.message || "Failed to join group" });
+  }
+};
+

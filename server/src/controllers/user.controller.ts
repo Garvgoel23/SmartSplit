@@ -279,6 +279,7 @@ export const getUserGroups = async (req: Request, res: Response) => {
         name: group.name,
         category: (group as any).category || 'GENERAL',
         memberCount: group.members.length,
+        inviteCode: group.inviteCode,
         balance: Math.abs(netBalance),
         status,
         members: group.members.map(m => ({
