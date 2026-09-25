@@ -7,13 +7,15 @@ import {
   addMember,
   removeMember,
   deleteGroup,
-  getGroupMessages
+  getGroupMessages,
+  joinGroupByCode
 } from "../controllers/group.controller.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
 router.post("/", requireAuth, createGroup);
+router.post("/join", requireAuth, joinGroupByCode);
 router.get("/", requireAuth, getGroups);
 router.get("/:id", requireAuth, getGroupById);
 router.get("/:id/details", requireAuth, getGroupDetails);

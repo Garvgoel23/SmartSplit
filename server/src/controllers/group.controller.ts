@@ -3,10 +3,13 @@ import { Group } from "../models/Group.js";
 import { User } from "../models/User.js";
 import { Expense } from "../models/Expense.js";
 import { calculateSettlements } from "../utils/debtCalculator.js";
+import { emitToGroup } from "../socket.js";
+
+const generateInviteCode = () => Math.random().toString(36).substring(2, 8).toUpperCase();
 
 export const createGroup = async (req: Request, res: Response) => {
   try {
-    const { name, description, initialMembers } = req.body;
+    const { name, description, initialMembers, friendIds } = req.body;
     const userId = (req as any).user.id;
 
     if (!name || typeof name !== "string") {
@@ -15,7 +18,7 @@ export const createGroup = async (req: Request, res: Response) => {
 
     const currentUser = await User.findById(userId);
 
-    const members = Array.isArray(initialMembers)
+    let members = Array.isArray(initialMembers)
       ? initialMembers.map((m: { name: string; email?: string; phone?: string; role?: "admin" | "member" }) => ({
           name: m.name,
           email: m.email || "",
@@ -24,6 +27,21 @@ export const createGroup = async (req: Request, res: Response) => {
           joinedAt: new Date()
         }))
       : [];
+
+    if (Array.isArray(friendIds) && friendIds.length > 0) {
+      const friends = await User.find({ _id: { $in: friendIds } });
+      friends.forEach(f => {
+        if (!members.some(m => m.email === f.email)) {
+          members.push({
+            name: f.fullName,
+            email: f.email,
+            phone: f.phone || "",
+            role: "member",
+            joinedAt: new Date()
+          });
+        }
+      });
+    }
 
     if (currentUser && !members.some(m => m.email === currentUser.email)) {
       members.push({
@@ -35,9 +53,12 @@ export const createGroup = async (req: Request, res: Response) => {
       });
     }
 
+    const inviteCode = generateInviteCode();
+
     const group = await Group.create({
       name,
       description: description || "",
+      inviteCode,
       members,
       createdBy: userId
     });
@@ -45,6 +66,55 @@ export const createGroup = async (req: Request, res: Response) => {
     return res.status(201).json({ success: true, data: group });
   } catch (error) {
     return res.status(500).json({ error: "Failed to create group" });
+  }
+};
+
+export const joinGroupByCode = async (req: Request, res: Response) => {
+  try {
+    const { inviteCode } = req.body;
+    const userId = (req as any).user.id;
+
+    if (!inviteCode) {
+      return res.status(400).json({ error: "Invite code is required" });
+    }
+
+    const group = await Group.findOne({ inviteCode: inviteCode.toUpperCase() });
+    if (!group) {
+      return res.status(404).json({ error: "Invalid invite code" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(401).json({ error: "User not found" });
+    }
+
+    const isMember = group.members.some(m => m.email === user.email || m.phone === user.phone || (m._id && m._id.toString() === userId));
+    
+    if (isMember) {
+      return res.status(400).json({ error: "You are already a member of this group" });
+    }
+
+    const newMember = {
+      name: user.fullName || user.preferredName || "Unknown",
+      email: user.email,
+      phone: user.phone || "",
+      role: "member" as const,
+      joinedAt: new Date()
+    };
+
+    group.members.push(newMember);
+    await group.save();
+
+    // Broadcast to the group via Socket.io
+    emitToGroup(group._id.toString(), "member-joined", {
+      group: group._id,
+      member: newMember
+    });
+
+    return res.status(200).json({ success: true, data: group });
+  } catch (error) {
+    console.error("Error joining group by code:", error);
+    return res.status(500).json({ error: "Failed to join group" });
   }
 };
 
@@ -239,6 +309,7 @@ export const getGroupDetails = async (req: Request, res: Response) => {
         group: {
           id: group._id,
           name: group.name,
+          inviteCode: group.inviteCode,
           category: (group as any).category || 'GENERAL',
           memberCount: group.members.length,
           members: group.members

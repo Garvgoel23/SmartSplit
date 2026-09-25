@@ -10,6 +10,7 @@ export interface IMember {
 }
 
 export interface IGroup extends Document {
+  inviteCode?: string;
   name: string;
   description?: string;
   currency: string;
@@ -30,6 +31,7 @@ const GroupSchema = new Schema<IGroup>({
   name: { type: String, required: true, trim: true },
   description: { type: String, default: "" },
   currency: { type: String, default: "INR", uppercase: true, trim: true },
+  inviteCode: { type: String, unique: true, sparse: true },
   members: [MemberSchema],
   createdBy: { type: String, default: "system" },
   createdAt: { type: Date, default: Date.now }
