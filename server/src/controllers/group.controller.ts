@@ -371,10 +371,12 @@ export const getGroupDetails = async (req: Request, res: Response) => {
 
     expenses.forEach(exp => {
       totalShared += exp.amount;
-      const payerId = exp.paidBy._id.toString();
+      const payerId = (exp.paidBy as any)?._id?.toString() || (exp.paidBy as any)?.toString() || '';
+      if (!payerId) return;
       
       exp.splits.forEach(split => {
-        const splitUserId = split.user.toString();
+        const splitUserId = (split.user as any)?._id?.toString() || (split.user as any)?.toString() || '';
+        if (!splitUserId) return;
         
         if (payerId !== splitUserId) {
           if (balancesMap.has(payerId)) {
