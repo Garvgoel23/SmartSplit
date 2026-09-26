@@ -26,6 +26,7 @@ export default function SettingsView({ initialData }: SettingsViewProps) {
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -91,10 +92,15 @@ export default function SettingsView({ initialData }: SettingsViewProps) {
         <div className="flex items-center justify-between border-b border-white/5 pb-8">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-2xl bg-[#1a2e22] border border-[#b2f5d1]/20 flex items-center justify-center text-xl font-black text-[#b2f5d1] relative shadow-[0_0_20px_rgba(178,245,209,0.1)] overflow-hidden">
-              {formData.avatar ? (
-                <img src={formData.avatar} alt="Avatar" className="w-full h-full object-cover" />
+              {formData.avatar && !imgError ? (
+                <img 
+                  src={formData.avatar} 
+                  alt="Avatar" 
+                  className="w-full h-full object-cover" 
+                  onError={() => setImgError(true)}
+                />
               ) : (
-                formData.fullName.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0,2) || 'AM'
+                formData.fullName.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0,2) || 'SM'
               )}
               <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-[#b2f5d1] rounded-full border-2 border-[#121214]" />
             </div>
