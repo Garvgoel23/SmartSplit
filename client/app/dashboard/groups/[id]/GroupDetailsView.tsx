@@ -68,7 +68,7 @@ export default function GroupDetailsView({
   };
 
   useEffect(() => {
-    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || (process.env.NEXT_PUBLIC_API_URL ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, '') : 'http://127.0.0.1:5050');
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || (process.env.NEXT_PUBLIC_API_URL ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, '') : 'https://smartsplit-1qz1.onrender.com');
     const newSocket = io(socketUrl);
     setSocket(newSocket);
 

@@ -177,8 +177,8 @@ Vercel is the native platform for Next.js and provides optimal edge rendering, a
 
    | Name | Value | Note |
    |---|---|---|
-   | `NEXT_PUBLIC_API_URL` | `https://smartsplit-backend.onrender.com/api` | Points to the backend Express API |
-   | `NEXT_PUBLIC_SOCKET_URL` | `https://smartsplit-backend.onrender.com` | Base backend URL for WebSockets |
+   | `NEXT_PUBLIC_API_URL` | `https://smartsplit-1qz1.onrender.com/api` | Points to the backend Express API |
+   | `NEXT_PUBLIC_SOCKET_URL` | `https://smartsplit-1qz1.onrender.com` | Base backend URL for WebSockets |
 
    > [!WARNING]
    > `NEXT_PUBLIC_*` variables are embedded into the client-side JavaScript bundle **at build time**. If your backend URL changes later, you must trigger a redeployment of the frontend.
