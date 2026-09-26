@@ -1,12 +1,12 @@
-'use client';
-
 import React, { useEffect, useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { io, Socket } from 'socket.io-client';
-import { Send, Paperclip, Plus, MessageSquare, X } from 'lucide-react';
+import { Send, Paperclip, Plus, MessageSquare, X, Trash2, AlertTriangle, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import CalculatingLoader from '../../../../components/CalculatingLoader';
 import AddExpenseModal from '../../../../components/AddExpenseModal';
 import AddGroupMemberModal from '../../../../components/AddGroupMemberModal';
+import { API_BASE, getAuthHeaders } from '@/lib/api';
 
 interface GroupDetailsViewProps {
   groupData: any;
@@ -23,6 +23,7 @@ export default function GroupDetailsView({
   currentUserId,
   currentUserName
 }: GroupDetailsViewProps) {
+  const router = useRouter();
   const [messages, setMessages] = useState<any[]>(initialMessages);
   const [chatInput, setChatInput] = useState('');
   const [isCalculating, setIsCalculating] = useState(false);
@@ -31,6 +32,9 @@ export default function GroupDetailsView({
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { group, balances, settlements, distribution } = groupData;
