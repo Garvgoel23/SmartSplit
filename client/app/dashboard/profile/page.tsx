@@ -27,6 +27,7 @@ export default function ProfileDashboardPage() {
   });
 
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -92,13 +93,13 @@ export default function ProfileDashboardPage() {
           
           <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-8">
             <div className="relative">
-              {profileImageUrl ? (
+              {profileImageUrl && !imgError ? (
                 <div className="w-20 h-20 rounded-full border-2 border-[#222] shadow-lg overflow-hidden relative">
-                  <Image 
+                  <img 
                     src={profileImageUrl} 
                     alt={fullName} 
-                    fill
-                    className="object-cover"
+                    className="w-full h-full object-cover"
+                    onError={() => setImgError(true)}
                   />
                 </div>
               ) : (
