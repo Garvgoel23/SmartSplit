@@ -7,7 +7,7 @@ import {
 } from "../components/types";
 
 export const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050/api";
+  process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5050/api";
 
 const TOKEN_KEY = "smartsplit_auth_token";
 
