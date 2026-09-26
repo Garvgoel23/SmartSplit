@@ -310,6 +310,7 @@ async function calculateUserFinancials(userId: string, userEmail: string, userPh
     totalOwe,
     totalOwed,
     netBalance,
+    totalBalance: netBalance,
     groupsOwedCount: groupsOwedSet.size,
     friendsOwedCount,
     recentBalances,
@@ -518,6 +519,7 @@ export const getRecentActivity = async (req: Request, res: Response) => {
       totalOwe,
       totalOwed,
       netBalance,
+      totalBalance,
       recentBalances
     } = await calculateUserFinancials(userId, userEmail, userPhone);
 
