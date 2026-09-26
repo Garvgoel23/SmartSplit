@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import CreateGroupModal from '@/components/CreateGroupModal';
+import { API_BASE } from '@/lib/api';
 import { ArrowUpRight, ArrowDownRight, Search, CreditCard, Wallet, Users, Settings, Banknote, UserPlus, PieChart } from 'lucide-react';
 
 interface DashboardViewProps {
