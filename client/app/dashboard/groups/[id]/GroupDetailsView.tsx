@@ -68,7 +68,8 @@ export default function GroupDetailsView({
   };
 
   useEffect(() => {
-    const newSocket = io('http://127.0.0.1:5050');
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || (process.env.NEXT_PUBLIC_API_URL ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, '') : 'http://127.0.0.1:5050');
+    const newSocket = io(socketUrl);
     setSocket(newSocket);
 
     newSocket.on('connect', () => {

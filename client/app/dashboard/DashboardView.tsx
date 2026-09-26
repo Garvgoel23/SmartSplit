@@ -164,7 +164,7 @@ export default function DashboardView({ initialData }: DashboardViewProps) {
           <CreateGroupModal 
             onClose={() => setIsCreateGroupOpen(false)}
             onGroupCreated={() => window.location.reload()}
-            apiUrl="http://127.0.0.1:5050/api/groups"
+            apiUrl={`${API_BASE}/groups`}
           />
         )}
       </div>
