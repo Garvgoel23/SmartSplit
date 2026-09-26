@@ -200,3 +200,24 @@ export async function previewSplit(
   const json = await res.json();
   return json.data;
 }
+
+export async function settleDebt(
+  groupId: string,
+  payload: {
+    payerId: string;
+    receiverId: string;
+    amount: number;
+    notes?: string;
+  }
+) {
+  const res = await fetch(`${API_BASE}/groups/${groupId}/settle`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || "Failed to settle payment");
+  }
+  return data;
+}
