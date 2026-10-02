@@ -80,6 +80,20 @@ export interface AuthResponse {
   otp?: string;
 }
 
+// Safe fetch wrapper that surfaces a helpful message if Render is restarting or waking up
+async function apiFetch(input: string, init?: RequestInit): Promise<Response> {
+  try {
+    return await fetch(input, init);
+  } catch (err: any) {
+    if (err instanceof TypeError || String(err?.message || err).toLowerCase().includes("fetch")) {
+      throw new Error(
+        "Unable to connect to the backend server. Render may be restarting, deploying, or waking up from sleep. Please wait 10-20 seconds and try again."
+      );
+    }
+    throw err;
+  }
+}
+
 // Helper to safely parse API responses, preventing "Unexpected token '<' is not valid JSON"
 async function parseApiResponse<T = any>(
   res: Response,
@@ -125,7 +139,7 @@ export async function registerUser(payload: {
   phone?: string;
   avatar?: string;
 }): Promise<AuthResponse> {
-  const res = await fetch(`${API_BASE}/auth/register`, {
+  const res = await apiFetch(`${API_BASE}/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -141,7 +155,7 @@ export async function loginUser(payload: {
   email: string;
   password: string;
 }): Promise<AuthResponse> {
-  const res = await fetch(`${API_BASE}/auth/login`, {
+  const res = await apiFetch(`${API_BASE}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -156,7 +170,7 @@ export async function loginUser(payload: {
 export async function requestPasswordResetOtp(payload: {
   email: string;
 }): Promise<AuthResponse> {
-  const res = await fetch(`${API_BASE}/auth/forgot-password/request-otp`, {
+  const res = await apiFetch(`${API_BASE}/auth/forgot-password/request-otp`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -169,7 +183,7 @@ export async function forgotPasswordUser(payload: {
   otp: string;
   newPassword: string;
 }): Promise<AuthResponse> {
-  const res = await fetch(`${API_BASE}/auth/forgot-password/reset`, {
+  const res = await apiFetch(`${API_BASE}/auth/forgot-password/reset`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -185,7 +199,7 @@ export async function getMe(): Promise<AuthUser> {
   const token = getAuthToken();
   if (!token) throw new Error("No session token");
 
-  const res = await fetch(`${API_BASE}/auth/me`, {
+  const res = await apiFetch(`${API_BASE}/auth/me`, {
     headers: getAuthHeaders(),
   });
   const data = await parseApiResponse<{ success: boolean; user: AuthUser }>(
@@ -200,7 +214,7 @@ export async function getMe(): Promise<AuthUser> {
 export async function createExpense(
   payload: CreateExpensePayload
 ): Promise<Expense> {
-  const res = await fetch(`${API_BASE}/expenses`, {
+  const res = await apiFetch(`${API_BASE}/expenses`, {
     method: "POST",
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
@@ -216,7 +230,7 @@ export async function createExpense(
 export async function listGroupExpenses(
   groupId: string
 ): Promise<Expense[]> {
-  const res = await fetch(`${API_BASE}/expenses/group/${groupId}`, {
+  const res = await apiFetch(`${API_BASE}/expenses/group/${groupId}`, {
     headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error("Failed to load expenses");
@@ -229,7 +243,7 @@ export async function listGroupExpenses(
 export async function previewSplit(
   payload: PreviewSplitPayload
 ): Promise<ComputedSplit[]> {
-  const res = await fetch(`${API_BASE}/expenses/preview-split`, {
+  const res = await apiFetch(`${API_BASE}/expenses/preview-split`, {
     method: "POST",
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
@@ -251,7 +265,7 @@ export async function settleDebt(
     notes?: string;
   }
 ) {
-  const res = await fetch(`${API_BASE}/groups/${groupId}/settle`, {
+  const res = await apiFetch(`${API_BASE}/groups/${groupId}/settle`, {
     method: "POST",
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
