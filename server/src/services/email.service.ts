@@ -1,9 +1,26 @@
 export async function sendOtpEmail(toEmail: string, otp: string): Promise<boolean> {
-  const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER;
-  const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
+  const smtpUser = (
+    process.env.SMTP_USER ||
+    process.env.EMAIL_USER ||
+    process.env.SMTP_EMAIL ||
+    process.env.MAIL_USER ||
+    process.env.GMAIL_USER ||
+    ""
+  ).trim();
+
+  const smtpPass = (
+    process.env.SMTP_PASS ||
+    process.env.EMAIL_PASS ||
+    process.env.SMTP_PASSWORD ||
+    process.env.MAIL_PASS ||
+    process.env.MAIL_PASSWORD ||
+    process.env.GMAIL_PASS ||
+    process.env.GMAIL_APP_PASSWORD ||
+    ""
+  ).replace(/\s+/g, "").trim();
 
   if (!smtpUser || !smtpPass) {
-    console.log(`[EMAIL SERVICE] No SMTP credentials configured. Generated OTP for ${toEmail}: ${otp}`);
+    console.error(`[EMAIL SERVICE] Missing SMTP credentials. Checked SMTP_USER and SMTP_PASS. OTP for ${toEmail}: ${otp}`);
     return false;
   }
 
@@ -12,10 +29,12 @@ export async function sendOtpEmail(toEmail: string, otp: string): Promise<boolea
     const nodemailer = (nodemailerModule as any).default || nodemailerModule;
 
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
       auth: {
         user: smtpUser,
-        pass: smtpPass.replace(/\s+/g, ""), // clean up any spaces in Google App Passwords
+        pass: smtpPass,
       },
     });
 

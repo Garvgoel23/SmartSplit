@@ -36,12 +36,8 @@ export default function ForgotPasswordPage() {
     try {
       setLoading(true);
       const res = await requestResetOtp(email.trim());
-      if (res?.otp) {
-        setOtp(res.otp);
-        setSuccess(`OTP generated: ${res.otp} (Auto-filled)`);
-      } else {
-        setSuccess(res?.message || "An OTP has been sent to your email address.");
-      }
+      setSuccess(res?.message || "An OTP has been sent to your email address. Please check your inbox.");
+      setOtp("");
       setStep(2);
     } catch (err: any) {
       setError(err.message || "Failed to request OTP.");

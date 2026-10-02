@@ -219,12 +219,16 @@ export const requestPasswordResetOtp = async (req: Request, res: Response) => {
 
     const emailSent = await sendOtpEmail(normalizedEmail, otp);
 
+    if (!emailSent) {
+      return res.status(500).json({
+        success: false,
+        error: "Failed to dispatch OTP email. Please ensure your SMTP configuration is active and correct on the server.",
+      });
+    }
+
     return res.json({
       success: true,
-      message: emailSent
-        ? "An OTP has been sent to your email address."
-        : "An OTP has been generated.",
-      otp: !emailSent ? otp : undefined,
+      message: "An OTP has been sent to your email address. Please check your inbox (and spam folder).",
     });
   } catch (error: any) {
     console.error("Request OTP error:", error);
