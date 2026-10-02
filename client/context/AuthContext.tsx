@@ -20,7 +20,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (fullName: string, email: string, password: string, phone?: string) => Promise<void>;
-  requestResetOtp: (email: string) => Promise<void>;
+  requestResetOtp: (email: string) => Promise<AuthResponse>;
   resetPassword: (email: string, otp: string, newPassword: string) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
@@ -80,7 +80,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const requestResetOtp = async (email: string) => {
-    await requestPasswordResetOtp({ email });
+    return await requestPasswordResetOtp({ email });
   };
 
   const resetPassword = async (email: string, otp: string, newPassword: string) => {

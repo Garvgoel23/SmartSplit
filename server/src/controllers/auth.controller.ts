@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { User } from "../models/User.js";
 import { generateToken } from "../utils/jwt.js";
 import { AuthenticatedRequest } from "../middleware/auth.middleware.js";
+import { sendOtpEmail } from "../services/email.service.js";
 
 export const register = async (req: Request, res: Response) => {
   try {
@@ -214,11 +215,16 @@ export const requestPasswordResetOtp = async (req: Request, res: Response) => {
     user.resetPasswordOtpExpiry = otpExpiry;
     await user.save();
 
-    console.log(`[DEV ONLY] OTP for ${normalizedEmail} is: ${otp}`);
+    console.log(`[AUTH] Password reset OTP for ${normalizedEmail} is: ${otp}`);
+
+    const emailSent = await sendOtpEmail(normalizedEmail, otp);
 
     return res.json({
       success: true,
-      message: "An OTP has been sent to your email address.",
+      message: emailSent
+        ? "An OTP has been sent to your email address."
+        : "An OTP has been generated.",
+      otp: !emailSent ? otp : undefined,
     });
   } catch (error: any) {
     console.error("Request OTP error:", error);
