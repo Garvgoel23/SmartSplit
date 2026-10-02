@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import {
   AuthUser,
+  AuthResponse,
   getAuthToken,
   setAuthToken,
   removeAuthToken,
