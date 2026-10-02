@@ -1,4 +1,9 @@
-export async function sendOtpEmail(toEmail: string, otp: string): Promise<boolean> {
+export interface SendEmailResult {
+  success: boolean;
+  error?: string;
+}
+
+export async function sendOtpEmail(toEmail: string, otp: string): Promise<SendEmailResult> {
   const smtpUser = (
     process.env.SMTP_USER ||
     process.env.EMAIL_USER ||
@@ -20,8 +25,9 @@ export async function sendOtpEmail(toEmail: string, otp: string): Promise<boolea
   ).replace(/\s+/g, "").trim();
 
   if (!smtpUser || !smtpPass) {
-    console.error(`[EMAIL SERVICE] Missing SMTP credentials. Checked SMTP_USER and SMTP_PASS. OTP for ${toEmail}: ${otp}`);
-    return false;
+    const errorMsg = `SMTP credentials not detected on server. (SMTP_USER: ${smtpUser ? "CONFIGURED" : "MISSING"}, SMTP_PASS: ${smtpPass ? "CONFIGURED" : "MISSING"}). Please ensure they are added to Render's Environment Variables.`;
+    console.error(`[EMAIL SERVICE] ${errorMsg}`);
+    return { success: false, error: errorMsg };
   }
 
   try {
@@ -29,12 +35,13 @@ export async function sendOtpEmail(toEmail: string, otp: string): Promise<boolea
     const nodemailer = (nodemailerModule as any).default || nodemailerModule;
 
     const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true,
+      service: "gmail",
       auth: {
         user: smtpUser,
         pass: smtpPass,
+      },
+      tls: {
+        rejectUnauthorized: false,
       },
     });
 
@@ -78,9 +85,13 @@ export async function sendOtpEmail(toEmail: string, otp: string): Promise<boolea
     });
 
     console.log(`[EMAIL SERVICE] Successfully dispatched OTP email to ${toEmail}`);
-    return true;
-  } catch (error) {
+    return { success: true };
+  } catch (error: any) {
     console.error("[EMAIL SERVICE] Failed to send email via SMTP:", error);
-    return false;
+    const detail = error?.message || String(error);
+    return {
+      success: false,
+      error: `Gmail SMTP Error: ${detail}`,
+    };
   }
 }

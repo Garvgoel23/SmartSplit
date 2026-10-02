@@ -217,12 +217,12 @@ export const requestPasswordResetOtp = async (req: Request, res: Response) => {
 
     console.log(`[AUTH] Password reset OTP for ${normalizedEmail} is: ${otp}`);
 
-    const emailSent = await sendOtpEmail(normalizedEmail, otp);
+    const emailResult = await sendOtpEmail(normalizedEmail, otp);
 
-    if (!emailSent) {
+    if (!emailResult.success) {
       return res.status(500).json({
         success: false,
-        error: "Failed to dispatch OTP email. Please ensure your SMTP configuration is active and correct on the server.",
+        error: emailResult.error || "Failed to dispatch OTP email. Please ensure your SMTP configuration is active and correct on the server.",
       });
     }
 
