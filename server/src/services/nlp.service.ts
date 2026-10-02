@@ -11,7 +11,12 @@ export interface ParsedNlpExpense {
   date: string;
 }
 
-const MODELS = ["gemini-3.6-flash"];
+const MODELS = [
+  "gemini-2.5-flash",
+  "gemini-flash-latest",
+  "gemini-2.5-flash-lite",
+  "gemini-2.5-pro"
+];
 
 export const parseNaturalLanguageInput = async (
   inputPrompt: string
@@ -57,13 +62,8 @@ Return pure JSON only. Do not add markdown codeblock formatting if possible.`;
       const response = await ai.models.generateContent({
         model: modelName,
         contents: [
-          {
-            role: "user",
-            parts: [
-              { text: systemPrompt },
-              { text: `User prompt to parse: "${inputPrompt}"` }
-            ]
-          }
+          systemPrompt,
+          `User prompt to parse: "${inputPrompt}"`
         ]
       });
       if (response && response.text) {
@@ -71,6 +71,7 @@ Return pure JSON only. Do not add markdown codeblock formatting if possible.`;
         break;
       }
     } catch (err: any) {
+      console.warn(`[NLP] Gemini model ${modelName} failed:`, err?.message || err);
       lastError = err;
     }
   }
@@ -81,10 +82,16 @@ Return pure JSON only. Do not add markdown codeblock formatting if possible.`;
     );
   }
 
-  const cleanedText = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
+  const cleanedText = responseText.replace(/```json/gi, "").replace(/```/g, "").trim();
+  let jsonString = cleanedText;
+  const firstBrace = cleanedText.indexOf("{");
+  const lastBrace = cleanedText.lastIndexOf("}");
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    jsonString = cleanedText.substring(firstBrace, lastBrace + 1);
+  }
 
   try {
-    const parsed = JSON.parse(cleanedText);
+    const parsed = JSON.parse(jsonString);
     const validSplitTypes = ["equal", "percentage", "fixed", "itemized"];
     return {
       title: parsed.title || "Expense",
