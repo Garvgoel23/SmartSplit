@@ -77,6 +77,7 @@ export interface AuthResponse {
   token?: string;
   user?: AuthUser;
   error?: string;
+  otp?: string;
 }
 
 // Helper to safely parse API responses, preventing "Unexpected token '<' is not valid JSON"
