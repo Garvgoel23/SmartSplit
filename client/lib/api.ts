@@ -79,6 +79,44 @@ export interface AuthResponse {
   error?: string;
 }
 
+// Helper to safely parse API responses, preventing "Unexpected token '<' is not valid JSON"
+async function parseApiResponse<T = any>(
+  res: Response,
+  fallbackError: string
+): Promise<T> {
+  const contentType = res.headers.get("content-type") || "";
+  let data: any = null;
+
+  if (contentType.includes("application/json")) {
+    try {
+      data = await res.json();
+    } catch {
+      data = null;
+    }
+  } else {
+    const text = await res.text().catch(() => "");
+    if (!res.ok) {
+      if (res.status === 404) {
+        throw new Error(
+          "API endpoint not found (404). If Render recently finished or failed a deployment, please ensure the latest backend build is active."
+        );
+      }
+      if (res.status === 502 || res.status === 503 || res.status === 504) {
+        throw new Error(
+          "The backend server is waking up or deploying on Render. Please wait 15-30 seconds and try again."
+        );
+      }
+      throw new Error(fallbackError || text || `Server request failed with status ${res.status}`);
+    }
+  }
+
+  if (!res.ok) {
+    throw new Error(data?.error || data?.message || fallbackError);
+  }
+
+  return (data ?? { success: true }) as T;
+}
+
 export async function registerUser(payload: {
   fullName: string;
   email: string;
@@ -91,10 +129,7 @@ export async function registerUser(payload: {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.error || "Failed to register");
-  }
+  const data = await parseApiResponse<AuthResponse>(res, "Failed to register");
   if (data.token) {
     setAuthToken(data.token);
   }
@@ -110,10 +145,7 @@ export async function loginUser(payload: {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.error || "Failed to log in");
-  }
+  const data = await parseApiResponse<AuthResponse>(res, "Failed to log in");
   if (data.token) {
     setAuthToken(data.token);
   }
@@ -128,28 +160,20 @@ export async function requestPasswordResetOtp(payload: {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.error || "Failed to request OTP");
-  }
-  return data;
+  return parseApiResponse<AuthResponse>(res, "Failed to request OTP");
 }
 
 export async function forgotPasswordUser(payload: {
   email: string;
   otp: string;
   newPassword: string;
-
 }): Promise<AuthResponse> {
   const res = await fetch(`${API_BASE}/auth/forgot-password/reset`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.error || "Failed to reset password");
-  }
+  const data = await parseApiResponse<AuthResponse>(res, "Failed to reset password");
   if (data.token) {
     setAuthToken(data.token);
   }
@@ -163,11 +187,10 @@ export async function getMe(): Promise<AuthUser> {
   const res = await fetch(`${API_BASE}/auth/me`, {
     headers: getAuthHeaders(),
   });
-  const data = await res.json();
-  if (!res.ok) {
-    removeAuthToken();
-    throw new Error(data.error || "Failed to fetch user");
-  }
+  const data = await parseApiResponse<{ success: boolean; user: AuthUser }>(
+    res,
+    "Failed to fetch user"
+  );
   return data.user;
 }
 
@@ -232,9 +255,5 @@ export async function settleDebt(
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   });
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.error || "Failed to settle payment");
-  }
-  return data;
+  return parseApiResponse(res, "Failed to settle payment");
 }
