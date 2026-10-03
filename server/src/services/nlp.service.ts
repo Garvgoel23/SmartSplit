@@ -13,8 +13,7 @@ export interface ParsedNlpExpense {
 
 const MODELS = [
   "gemini-3.8-flash",
-  "gemini-2.0-flash",
-  "gemini-2.0-flash-lite"
+  "gemini-3.5-flash-lite"
 ];
 
 export const parseNaturalLanguageInput = async (
