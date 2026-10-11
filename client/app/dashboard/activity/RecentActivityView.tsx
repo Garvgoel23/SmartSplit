@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Utensils, Plane, CheckCircle2, ShoppingCart, Coffee, Activity, Sparkles, Bell } from 'lucide-react';
 import { API_BASE, getAuthHeaders } from '@/lib/api';
+import { useCurrency } from '@/lib/useCurrency';
 
 interface RecentActivityViewProps {
   initialData?: {
@@ -55,9 +56,7 @@ export default function RecentActivityView({ initialData }: RecentActivityViewPr
     ? initialData.frequentConnections
     : [];
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(Math.abs(Number(amount) || 0));
-  };
+  const { formatCurrency } = useCurrency();
   
   const filteredActivities = rawActivities.filter((act: any) => {
     if (!act) return false;

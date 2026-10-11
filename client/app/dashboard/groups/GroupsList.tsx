@@ -5,6 +5,7 @@ import { Home, Plane, Utensils, LayoutGrid, List, Plus, Settings, Link as LinkIc
 import CreateGroupModal from '@/components/CreateGroupModal';
 import JoinGroupModal from '@/components/JoinGroupModal';
 import { API_BASE, getAuthHeaders } from '@/lib/api';
+import { useCurrency } from '@/lib/useCurrency';
 
 import Link from 'next/link';
 
@@ -38,9 +39,7 @@ export default function GroupsList({ initialGroups }: { initialGroups: any[] }) 
     return 'text-white/60';
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount);
-  };
+  const { formatCurrency } = useCurrency();
 
   const handleDeleteClick = (e: React.MouseEvent, group: any) => {
     e.preventDefault();

@@ -8,6 +8,7 @@ import AddGroupMemberModal from '../../../../components/AddGroupMemberModal';
 import SettleDebtModal from '../../../../components/SettleDebtModal';
 import EditGroupModal from '../../../../components/EditGroupModal';
 import { API_BASE, getAuthHeaders } from '@/lib/api';
+import { useCurrency } from '@/lib/useCurrency';
 
 interface GroupDetailsViewProps {
   groupData: any;
@@ -121,9 +122,7 @@ export default function GroupDetailsView({
     setChatInput('');
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount);
-  };
+  const { formatCurrency } = useCurrency();
 
   const getPercentage = (val: number, total: number) => {
     if (total === 0) return 0;

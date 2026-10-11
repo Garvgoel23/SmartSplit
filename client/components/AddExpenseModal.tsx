@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 
 import {
   X,
@@ -22,6 +22,8 @@ import SplitMethodSelector from './SplitMethodSelector';
 import SplitInputPanel from './SplitInputPanel';
 import { API_BASE, getAuthHeaders, getAuthToken } from '@/lib/api';
 import { formatErrorMessage } from '@/lib/errorUtils';
+import { useAuth } from '@/context/AuthContext';
+import { useCurrency } from '@/lib/useCurrency';
 
 interface Props {
   group: Group;
@@ -39,7 +41,9 @@ const CATEGORIES = [
 ];
 
 const AddExpenseModal: React.FC<Props> = ({ group, onClose, onExpenseCreated }) => {
-  
+  const { user } = useAuth();
+  const { currencySymbol, formatCurrency: fmtCurrency } = useCurrency();
+
   // ── Step management ────────────────────────────────────────────
   const [step, setStep] = useState<0 | 1 | 2 | 3>(0); // 0 = Smart Input
 
@@ -49,12 +53,28 @@ const AddExpenseModal: React.FC<Props> = ({ group, onClose, onExpenseCreated }) 
   const [aiError, setAiError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  // ── Determine default paidBy: current user first, then first member ──
+  const currentUserMember = group.members.find(
+    (m) => m._id === user?.id || m.email === user?.email
+  );
+  const defaultPaidBy = currentUserMember?._id || group.members[0]?._id || '';
+
+  // ── Sort members so current user appears first in the "Paid by" dropdown ──
+  const sortedMembers = [...group.members].sort((a, b) => {
+    const aIsCurrentUser = a._id === defaultPaidBy;
+    const bIsCurrentUser = b._id === defaultPaidBy;
+    if (aIsCurrentUser && !bIsCurrentUser) return -1;
+    if (!aIsCurrentUser && bIsCurrentUser) return 1;
+    return 0;
+  });
 
   // ── Step 1 state (Details) ─────────────────────────────────────
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState<number>(0);
   const [category, setCategory] = useState('General');
-  const [paidBy, setPaidBy] = useState(group.members[0]?._id || '');
+  const [paidBy, setPaidBy] = useState(defaultPaidBy);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [imageHash, setImageHash] = useState<string | undefined>();
   const [merchant, setMerchant] = useState('');
@@ -106,10 +126,8 @@ const AddExpenseModal: React.FC<Props> = ({ group, onClose, onExpenseCreated }) 
     setStep(1);
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  // ── Core upload handler (shared by file input & drag-and-drop) ──
+  const processFileUpload = useCallback(async (file: File) => {
     setIsProcessingAI(true);
     setAiError('');
 
@@ -147,7 +165,39 @@ const AddExpenseModal: React.FC<Props> = ({ group, onClose, onExpenseCreated }) 
       if (fileInputRef.current) fileInputRef.current.value = '';
       if (cameraInputRef.current) cameraInputRef.current.value = '';
     }
+  }, [group._id]);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    processFileUpload(file);
   };
+
+  // ── Drag-and-drop handlers ──────────────────────────────────────
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      processFileUpload(file);
+    } else {
+      setAiError('Please drop an image file (JPEG, PNG, etc.).');
+    }
+  }, [processFileUpload]);
 
   const handleNLP = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -274,8 +324,16 @@ const AddExpenseModal: React.FC<Props> = ({ group, onClose, onExpenseCreated }) 
               )}
               
               <div 
-                className="border-2 border-dashed border-white/10 rounded-2xl p-10 flex flex-col items-center justify-center gap-4 hover:border-[#b2f5d1]/50 hover:bg-[#b2f5d1]/5 transition-all cursor-pointer group relative overflow-hidden"
+                className={`border-2 border-dashed rounded-2xl p-10 flex flex-col items-center justify-center gap-4 transition-all cursor-pointer group relative overflow-hidden ${
+                  isDragOver
+                    ? 'border-[#b2f5d1] bg-[#b2f5d1]/10 scale-[1.02] shadow-[0_0_30px_rgba(178,245,209,0.15)]'
+                    : 'border-white/10 hover:border-[#b2f5d1]/50 hover:bg-[#b2f5d1]/5'
+                }`}
                 onClick={() => fileInputRef.current?.click()}
+                onDragOver={handleDragOver}
+                onDragEnter={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
               >
                 {isProcessingAI && (
                   <div className="absolute inset-0 bg-[#121214]/80 backdrop-blur-sm flex flex-col items-center justify-center z-10 gap-3">
@@ -284,12 +342,20 @@ const AddExpenseModal: React.FC<Props> = ({ group, onClose, onExpenseCreated }) 
                   </div>
                 )}
                 
-                <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-[#b2f5d1]/20 transition-colors">
-                  <Upload className="w-8 h-8 text-white/40 group-hover:text-[#b2f5d1] transition-colors" />
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-colors ${
+                  isDragOver ? 'bg-[#b2f5d1]/30' : 'bg-white/5 group-hover:bg-[#b2f5d1]/20'
+                }`}>
+                  <Upload className={`w-8 h-8 transition-colors ${
+                    isDragOver ? 'text-[#b2f5d1] animate-bounce' : 'text-white/40 group-hover:text-[#b2f5d1]'
+                  }`} />
                 </div>
                 <div className="text-center">
-                  <h3 className="text-base font-bold text-white mb-1">Drop Receipt Image</h3>
-                  <p className="text-sm text-white/40">or click to browse files</p>
+                  <h3 className="text-base font-bold text-white mb-1">
+                    {isDragOver ? 'Drop your receipt here!' : 'Drag & Drop Receipt Image'}
+                  </h3>
+                  <p className="text-sm text-white/40">
+                    {isDragOver ? 'Release to upload' : 'or click to browse files'}
+                  </p>
                 </div>
                 
                 <div className="flex items-center gap-4 w-full max-w-xs my-2">
@@ -373,7 +439,7 @@ const AddExpenseModal: React.FC<Props> = ({ group, onClose, onExpenseCreated }) 
                     <CreditCard size={14} /> Total Amount
                   </label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50 font-medium">$</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50 font-medium">{currencySymbol}</span>
                     <input
                       className="w-full bg-[#1a1a1c] border border-white/10 rounded-xl py-3 pl-8 pr-4 text-sm text-white focus:outline-none focus:border-[#b2f5d1]/50 transition-colors"
                       type="number"
@@ -424,9 +490,9 @@ const AddExpenseModal: React.FC<Props> = ({ group, onClose, onExpenseCreated }) 
                     value={paidBy}
                     onChange={(e) => setPaidBy(e.target.value)}
                   >
-                    {group.members.map((m) => (
+                    {sortedMembers.map((m) => (
                       <option key={m._id} value={m._id}>
-                        {m.name}
+                        {m.name}{m._id === defaultPaidBy ? ' (You)' : ''}
                       </option>
                     ))}
                   </select>
@@ -460,7 +526,7 @@ const AddExpenseModal: React.FC<Props> = ({ group, onClose, onExpenseCreated }) 
                   </div>
                   <div className="flex flex-col gap-1">
                     <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Amount</span>
-                    <span className="text-lg font-bold text-[#b2f5d1]">${amount.toFixed(2)}</span>
+                    <span className="text-lg font-bold text-[#b2f5d1]">{fmtCurrency(amount)}</span>
                   </div>
                   <div className="flex flex-col gap-1">
                     <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Category</span>
@@ -490,7 +556,7 @@ const AddExpenseModal: React.FC<Props> = ({ group, onClose, onExpenseCreated }) 
                     const member = group.members.find((m) => m._id === p.userId);
                     const display =
                       splitType === 'exact'
-                        ? `$${(p.amount ?? 0).toFixed(2)}`
+                        ? fmtCurrency(p.amount ?? 0)
                         : splitType === 'shares'
                           ? `${p.shares ?? 0}× share`
                           : `${(p.percentage ?? 0).toFixed(1)}%`;

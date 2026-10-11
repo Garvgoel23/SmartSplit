@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Minus, Plus, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { SplitType, Member, ComputedSplit } from './types';
 import { previewSplit } from '../lib/api';
+import { useCurrency } from '@/lib/useCurrency';
 
 interface ParticipantState {
   userId: string;
@@ -29,6 +30,7 @@ const SplitInputPanel: React.FC<Props> = ({
   totalAmount,
   onChange,
 }) => {
+  const { currencySymbol, formatCurrency } = useCurrency();
   // ── Local state per participant ────────────────────────────────
   const [participants, setParticipants] = useState<ParticipantState[]>([]);
   const [preview, setPreview] = useState<ComputedSplit[]>([]);
@@ -199,7 +201,7 @@ const SplitInputPanel: React.FC<Props> = ({
 
                 {splitType === 'exact' && (
                   <div className="relative w-28">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50 font-medium">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50 font-medium">{currencySymbol}</span>
                     <input
                       type="number"
                       className="w-full bg-[#0f0f0f] border border-white/10 rounded-lg py-2 pl-7 pr-3 text-sm text-white font-medium focus:outline-none focus:border-[#b2f5d1] transition-colors"
@@ -255,7 +257,7 @@ const SplitInputPanel: React.FC<Props> = ({
               {/* Computed amount */}
               <div className="col-span-3 text-right">
                 {previewAmt !== null ? (
-                  <span className="text-sm font-bold text-[#b2f5d1]">${previewAmt.toFixed(2)}</span>
+                  <span className="text-sm font-bold text-[#b2f5d1]">{formatCurrency(previewAmt)}</span>
                 ) : (
                   <span className="text-sm text-white/30">—</span>
                 )}

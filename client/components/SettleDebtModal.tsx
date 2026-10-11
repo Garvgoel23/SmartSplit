@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, CheckCircle2, ArrowRight, DollarSign, AlertCircle, Loader2, CreditCard } from 'lucide-react';
 import { settleDebt } from '@/lib/api';
+import { useCurrency } from '@/lib/useCurrency';
 
 interface SettleDebtModalProps {
   isOpen: boolean;
@@ -37,6 +38,7 @@ export default function SettleDebtModal({
   const [notes, setNotes] = useState('UPI / Direct Payment');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const { currencySymbol, formatCurrency: fmtCurrency } = useCurrency();
 
   // Initialise or update form when modal opens or prefill changes
   useEffect(() => {
@@ -180,7 +182,7 @@ export default function SettleDebtModal({
                         <span className="font-semibold text-white">{s.toName}</span>
                       </div>
                       <span className="font-mono font-bold text-sm text-[#b2f5d1]">
-                        ₹{s.amount.toFixed(2)}
+                        {fmtCurrency(s.amount)}
                       </span>
                     </button>
                   );
@@ -203,7 +205,7 @@ export default function SettleDebtModal({
                 <option value="">Select payer...</option>
                 {balances.map((b) => (
                   <option key={b.userId} value={b.userId}>
-                    {b.name} {b.netAmount < -0.01 ? `(Owes ₹${Math.abs(b.netAmount).toFixed(2)})` : ''}
+                    {b.name} {b.netAmount < -0.01 ? `(Owes ${fmtCurrency(Math.abs(b.netAmount))})` : ''}
                   </option>
                 ))}
               </select>
@@ -221,7 +223,7 @@ export default function SettleDebtModal({
                 <option value="">Select receiver...</option>
                 {balances.map((b) => (
                   <option key={b.userId} value={b.userId}>
-                    {b.name} {b.netAmount > 0.01 ? `(Owed ₹${b.netAmount.toFixed(2)})` : ''}
+                    {b.name} {b.netAmount > 0.01 ? `(Owed ${fmtCurrency(b.netAmount)})` : ''}
                   </option>
                 ))}
               </select>
@@ -234,7 +236,7 @@ export default function SettleDebtModal({
               Amount Paid
             </label>
             <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40 font-medium">₹</span>
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40 font-medium">{currencySymbol}</span>
               <input
                 type="number"
                 step="0.01"
@@ -268,7 +270,7 @@ export default function SettleDebtModal({
                 <CreditCard className="w-4 h-4" />
               </div>
               <p className="text-xs text-white/70 leading-relaxed">
-                Recording this payment will credit <strong className="text-white">{payerName}</strong> by <strong className="text-[#b2f5d1]">₹{parseFloat(amount).toFixed(2)}</strong> and clear corresponding debt owed to <strong className="text-white">{receiverName}</strong>.
+                Recording this payment will credit <strong className="text-white">{payerName}</strong> by <strong className="text-[#b2f5d1]">{fmtCurrency(parseFloat(amount))}</strong> and clear corresponding debt owed to <strong className="text-white">{receiverName}</strong>.
               </p>
             </div>
           )}

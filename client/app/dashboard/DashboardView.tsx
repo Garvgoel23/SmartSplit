@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import CreateGroupModal from '@/components/CreateGroupModal';
 import { API_BASE } from '@/lib/api';
 import { ArrowUpRight, ArrowDownRight, Search, CreditCard, Wallet, Users, Settings, Banknote, UserPlus, PieChart } from 'lucide-react';
+import { useCurrency } from '@/lib/useCurrency';
 
 interface DashboardViewProps {
   initialData: any;
@@ -12,10 +13,7 @@ interface DashboardViewProps {
 export default function DashboardView({ initialData }: DashboardViewProps) {
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
   const { totalBalance, youOwe, youAreOwed, groupsOwedCount, friendsOwedCount, recentBalances } = initialData;
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(Math.abs(amount));
-  };
+  const { formatCurrency } = useCurrency();
 
   const formatTotalBalance = (amount: number) => {
     const formatted = formatCurrency(amount);
