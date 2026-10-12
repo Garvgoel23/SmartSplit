@@ -27,18 +27,22 @@ export const createGroup = async (req: Request, res: Response) => {
       : [];
 
     if (Array.isArray(friendIds) && friendIds.length > 0) {
-      const friends = await User.find({ _id: { $in: friendIds } });
-      friends.forEach(f => {
-        if (!members.some(m => m.email === f.email)) {
-          members.push({
-            name: f.fullName,
-            email: f.email,
-            phone: f.phone || "",
-            role: "member",
-            joinedAt: new Date()
-          });
-        }
-      });
+      const allowedFriendIds = (currentUser?.friends || []).map((f: any) => f.toString());
+      const verifiedFriendIds = friendIds.filter((id: string) => allowedFriendIds.includes(id.toString()));
+      if (verifiedFriendIds.length > 0) {
+        const friends = await User.find({ _id: { $in: verifiedFriendIds } });
+        friends.forEach(f => {
+          if (!members.some(m => m.email === f.email)) {
+            members.push({
+              name: f.fullName,
+              email: f.email,
+              phone: f.phone || "",
+              role: "member",
+              joinedAt: new Date()
+            });
+          }
+        });
+      }
     }
 
     if (currentUser && !members.some(m => m.email === currentUser.email)) {
@@ -201,89 +205,114 @@ export const getOrGenerateInviteCode = async (req: Request, res: Response) => {
 export const addMember = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, email, phone, role } = req.body;
-    if (!name || typeof name !== "string") {
-      return res.status(400).json({ error: "Member name is required" });
-    }
+    const { name, email, phone, role, friendId } = req.body;
+    const currentUserId = (req as any).user?.id || (req as any).user?._id;
 
     const group = await Group.findById(id);
     if (!group) {
       return res.status(404).json({ error: "Group not found" });
     }
 
+    const currentUser = await User.findById(currentUserId);
+    if (!currentUser) {
+      return res.status(401).json({ error: "Current user not found" });
+    }
+
     const trimmedEmail = email ? email.trim().toLowerCase() : "";
     const trimmedPhone = phone ? phone.trim() : "";
 
-    // Check if user is already a member
-    if (trimmedEmail || trimmedPhone) {
-      const isAlreadyMember = group.members.some((m) => {
-        const mEmail = (m.email || "").toLowerCase().trim();
-        const mPhone = (m.phone || "").trim();
-        if (trimmedEmail && mEmail && mEmail === trimmedEmail) return true;
-        if (trimmedPhone && mPhone && mPhone === trimmedPhone) return true;
-        return false;
-      });
-
-      if (isAlreadyMember) {
-        return res.status(400).json({
-          success: false,
-          error: "This user is already a member of this group."
-        });
-      }
+    // Find the target user by friendId, email, phone, or name
+    let targetUser = null;
+    if (friendId) {
+      targetUser = await User.findById(friendId);
     }
-
-    const newMember = {
-      name: name.trim(),
-      email: trimmedEmail,
-      phone: trimmedPhone,
-      role: (role === "admin" ? "admin" : "member") as "admin" | "member",
-      joinedAt: new Date()
-    };
-
-    if (trimmedEmail || trimmedPhone) {
-      const existingUser = await User.findOne({
+    if (!targetUser && (trimmedEmail || trimmedPhone)) {
+      targetUser = await User.findOne({
         $or: [
           ...(trimmedEmail ? [{ email: trimmedEmail }] : []),
           ...(trimmedPhone ? [{ phone: trimmedPhone }] : [])
         ]
       });
-
-      if (existingUser) {
-        const { Notification } = await import("../models/Notification.js");
-        const existingInvite = await Notification.findOne({
-          recipient: existingUser._id,
-          group: group._id,
-          type: "GROUP_INVITE",
-          status: "PENDING"
-        });
-        
-        if (!existingInvite) {
-          const invite = await Notification.create({
-            recipient: existingUser._id,
-            sender: (req as any).user?.id || (req as any).user?._id,
-            group: group._id,
-            type: "GROUP_INVITE",
-            status: "PENDING"
-          });
-          
-          emitToUser(existingUser._id.toString(), "notification:new", invite);
-        }
-        
-        return res.status(200).json({ success: true, message: "Invite sent", data: group });
-      }
+    }
+    if (!targetUser && name) {
+      targetUser = await User.findOne({ fullName: name.trim() });
     }
 
-    group.members.push(newMember);
-    await group.save();
+    if (!targetUser) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found. You can only invite registered users who are in your friends list."
+      });
+    }
 
-    emitToGroup(group._id.toString(), "member-joined", {
-      group: group._id,
-      member: newMember
+    // Check if target user is in current user's friends list
+    const isFriend = (currentUser.friends || []).some(
+      (f: any) => f.toString() === targetUser._id.toString()
+    );
+
+    if (!isFriend) {
+      return res.status(403).json({
+        success: false,
+        error: "You can only add users who are your friends. Please add them as a friend first."
+      });
+    }
+
+    // Check if user is already a member
+    const isAlreadyMember = group.members.some((m) => {
+      const mEmail = (m.email || "").toLowerCase().trim();
+      const mPhone = (m.phone || "").trim();
+      if (targetUser.email && mEmail && mEmail === targetUser.email.toLowerCase().trim()) return true;
+      if (targetUser.phone && mPhone && mPhone === targetUser.phone.trim()) return true;
+      return false;
     });
 
-    return res.status(200).json({ success: true, data: group });
+    if (isAlreadyMember) {
+      return res.status(400).json({
+        success: false,
+        error: "This friend is already a member of this group."
+      });
+    }
+
+    // Check if invite is already pending
+    const { Notification } = await import("../models/Notification.js");
+    const existingInvite = await Notification.findOne({
+      recipient: targetUser._id,
+      group: group._id,
+      type: "GROUP_INVITE",
+      status: "PENDING"
+    });
+
+    if (existingInvite) {
+      return res.status(400).json({
+        success: false,
+        error: "An invite has already been sent to this friend and is awaiting their approval."
+      });
+    }
+
+    // Create group invitation notification for the friend
+    const invite = await Notification.create({
+      recipient: targetUser._id,
+      sender: currentUser._id,
+      group: group._id,
+      type: "GROUP_INVITE",
+      status: "PENDING",
+      read: false
+    });
+
+    const populatedInvite = await Notification.findById(invite._id)
+      .populate("sender", "fullName preferredName avatar")
+      .populate("group", "name");
+
+    emitToUser(targetUser._id.toString(), "notification:new", populatedInvite || invite);
+
+    return res.status(200).json({
+      success: true,
+      message: `Invitation sent to ${targetUser.fullName}. They must accept on their Recent Activity board before you can add them.`,
+      data: group
+    });
   } catch (error) {
-    return res.status(500).json({ error: "Failed to add member to group" });
+    console.error("addMember error:", error);
+    return res.status(500).json({ error: "Failed to invite member to group" });
   }
 };
 
