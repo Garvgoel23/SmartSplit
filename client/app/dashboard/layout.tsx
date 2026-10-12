@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, Clock, Users, UserPlus, Settings, LogOut, Plus, Bell, HelpCircle, Menu, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import GlobalNotificationPopup from "@/components/GlobalNotificationPopup";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -36,6 +37,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex h-screen bg-[#0a0a0a] text-white font-sans overflow-hidden">
+      {/* Global Real-time Notification Pop-up Banner */}
+      <GlobalNotificationPopup />
+
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div 

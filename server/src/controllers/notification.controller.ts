@@ -14,7 +14,7 @@ export const getNotifications = async (req: Request, res: Response) => {
 
     const notifications = await Notification.find({ recipient: currentUser._id })
       .sort({ createdAt: -1 })
-      .populate("sender", "fullName preferredName avatar email")
+      .populate("sender", "fullName preferredName avatar")
       .populate("group", "name");
 
     return res.json({ success: true, data: notifications });
@@ -71,7 +71,10 @@ export const acceptInvite = async (req: Request, res: Response) => {
         read: false
       });
 
-      emitToUser(senderUser._id.toString(), "notification:new", acceptedNotif);
+      const populatedAcceptedNotif = await Notification.findById(acceptedNotif._id)
+        .populate("sender", "fullName preferredName avatar");
+
+      emitToUser(senderUser._id.toString(), "notification:new", populatedAcceptedNotif || acceptedNotif);
       emitToUser(senderUser._id.toString(), "friend:status-change", {
         userId: currentUser._id.toString(),
         status: "FRIENDS"

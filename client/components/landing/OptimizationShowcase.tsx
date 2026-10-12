@@ -6,7 +6,7 @@ import { ArrowRight, Banknote } from 'lucide-react';
 
 export default function OptimizationShowcase() {
   return (
-    <section className="w-full max-w-5xl mx-auto px-4 pb-32">
+    <section className="w-full max-w-5xl mx-auto px-4 pb-20 md:pb-32 overflow-hidden">
       <motion.div 
         initial={{ y: 20, opacity: 0 }}
         whileInView={{ y: 0, opacity: 1 }}
