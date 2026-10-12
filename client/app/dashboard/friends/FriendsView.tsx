@@ -361,12 +361,7 @@ export default function FriendsView({ initialFriends }: FriendsViewProps) {
       {/* Header and Instagram-style Tabs */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-6">
         <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-extrabold text-white tracking-tight">Friends & Network</h1>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#b2f5d1]/10 text-[#b2f5d1] border border-[#b2f5d1]/20">
-              Instagram Style
-            </span>
-          </div>
+          <h1 className="text-3xl font-extrabold text-white tracking-tight">Friends & Network</h1>
           <p className="text-white/50 text-sm mt-1">
             Connect with friends securely. Only friends can be added to your shared expense groups.
           </p>
