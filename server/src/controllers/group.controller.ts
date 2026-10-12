@@ -221,7 +221,6 @@ export const addMember = async (req: Request, res: Response) => {
     const trimmedEmail = email ? email.trim().toLowerCase() : "";
     const trimmedPhone = phone ? phone.trim() : "";
 
-    // Find the target user by friendId, email, phone, or name
     let targetUser = null;
     if (friendId) {
       targetUser = await User.findById(friendId);
@@ -245,7 +244,6 @@ export const addMember = async (req: Request, res: Response) => {
       });
     }
 
-    // Check if target user is in current user's friends list
     const isFriend = (currentUser.friends || []).some(
       (f: any) => f.toString() === targetUser._id.toString()
     );
@@ -257,7 +255,6 @@ export const addMember = async (req: Request, res: Response) => {
       });
     }
 
-    // Check if user is already a member
     const isAlreadyMember = group.members.some((m) => {
       const mEmail = (m.email || "").toLowerCase().trim();
       const mPhone = (m.phone || "").trim();
@@ -273,7 +270,6 @@ export const addMember = async (req: Request, res: Response) => {
       });
     }
 
-    // Check if invite is already pending
     const { Notification } = await import("../models/Notification.js");
     const existingInvite = await Notification.findOne({
       recipient: targetUser._id,
@@ -289,7 +285,6 @@ export const addMember = async (req: Request, res: Response) => {
       });
     }
 
-    // Create group invitation notification for the friend
     const invite = await Notification.create({
       recipient: targetUser._id,
       sender: currentUser._id,
@@ -352,7 +347,6 @@ export const deleteGroup = async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Group not found" });
     }
 
-    // Allow creator or member to delete
     const isAuthorized =
       group.createdBy === userId ||
       group.members.some(
@@ -365,7 +359,6 @@ export const deleteGroup = async (req: Request, res: Response) => {
 
     await Group.findByIdAndDelete(id);
 
-    // Thoroughly clean up expenses belonging to this group
     await Expense.deleteMany({ group: id });
     try {
       const { Types } = await import("mongoose");
@@ -412,12 +405,10 @@ export const getGroupDetails = async (req: Request, res: Response) => {
     const group = await Group.findById(id);
     if (!group) return res.status(404).json({ error: "Group not found" });
 
-    // Ensure invite code is present
     if (!group.inviteCode) {
       await ensureGroupInviteCode(group);
     }
 
-    // Validate user is in group
     const user = await User.findById(userId);
     if (!user) return res.status(401).json({ error: "User not found" });
     const isMember = 
@@ -434,7 +425,6 @@ export const getGroupDetails = async (req: Request, res: Response) => {
     const memberIdToUserId = new Map<string, string>();
     let totalShared = 0;
 
-    // Initialize map with all members
     for (const member of group.members) {
       const memberUser = await User.findOne({ 
         $or: [
@@ -556,7 +546,6 @@ export const settleGroupDebt = async (req: Request, res: Response) => {
       return res.status(401).json({ success: false, error: "User not found." });
     }
 
-    // Verify membership
     const isMember = 
       group.createdBy === userId ||
       group.members.some(m => 
@@ -568,7 +557,6 @@ export const settleGroupDebt = async (req: Request, res: Response) => {
       return res.status(403).json({ success: false, error: "Access denied." });
     }
 
-    // Find payer and receiver names
     const payerUser = await User.findById(payerId).catch(() => null);
     const receiverUser = await User.findById(receiverId).catch(() => null);
 
@@ -580,7 +568,6 @@ export const settleGroupDebt = async (req: Request, res: Response) => {
 
     const description = notes?.trim() || `Settlement: ${payerName} paid ${receiverName}`;
 
-    // Target ObjectIds
     const finalPayerId = payerUser ? payerUser._id : (payerMember?._id || payerId);
     const finalReceiverId = receiverUser ? receiverUser._id : (receiverMember?._id || receiverId);
 

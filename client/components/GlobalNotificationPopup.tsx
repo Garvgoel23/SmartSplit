@@ -58,7 +58,6 @@ export default function GlobalNotificationPopup() {
     }, 12000);
   }, [playNotificationSound]);
 
-  // Socket connection & user room subscription
   useEffect(() => {
     const socket = getSocket();
     const currentUserId = user?.id || (user as any)?._id;
@@ -113,7 +112,6 @@ export default function GlobalNotificationPopup() {
     };
   }, [user, showPopup]);
 
-  // Handle Accept (Group Invite or Friend Request)
   const handleAccept = async (id: string) => {
     setActionLoadingId(id);
     try {
@@ -137,7 +135,6 @@ export default function GlobalNotificationPopup() {
     }
   };
 
-  // Handle Reject (Group Invite or Friend Request)
   const handleReject = async (id: string) => {
     setActionLoadingId(id);
     try {
@@ -160,7 +157,6 @@ export default function GlobalNotificationPopup() {
     }
   };
 
-  // Handle Group Owner Confirming Member Addition
   const handleConfirmAddMember = async (id: string) => {
     setActionLoadingId(id);
     try {
@@ -186,7 +182,6 @@ export default function GlobalNotificationPopup() {
 
   return (
     <>
-      {/* Toast Feedback */}
       {actionMessage && (
         <div className="fixed bottom-6 right-6 z-[1000] bg-[#121214] border border-[#b2f5d1]/40 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-2.5 animate-in slide-in-from-bottom-5">
           <Check className="w-4 h-4 text-[#b2f5d1]" />
@@ -194,14 +189,12 @@ export default function GlobalNotificationPopup() {
         </div>
       )}
 
-      {/* Floating Pop-up Message Notification Banner */}
       {popupNotification && (
         <div
           role="alert"
           aria-live="assertive"
           className="fixed top-4 left-3 right-3 sm:left-auto sm:right-6 sm:top-6 sm:max-w-md z-[999] bg-[#121214]/95 border border-[#b2f5d1]/60 rounded-2xl p-4 sm:p-5 shadow-[0_12px_40px_rgba(0,0,0,0.85),0_0_30px_rgba(178,245,209,0.25)] backdrop-blur-xl animate-in slide-in-from-top-4 duration-300"
         >
-          {/* Header row */}
           <div className="flex items-start justify-between gap-3 mb-2.5">
             <div className="flex items-center gap-2 text-[#b2f5d1] text-xs font-black uppercase tracking-wider">
               <span className="relative flex h-2.5 w-2.5">
@@ -220,7 +213,6 @@ export default function GlobalNotificationPopup() {
             </button>
           </div>
 
-          {/* Sender info & Message */}
           <div className="flex items-center gap-3 mb-3.5">
             <div className="w-10 h-10 rounded-full bg-[#1a1a1c] border border-white/10 flex items-center justify-center shrink-0 font-bold text-white/80 overflow-hidden aspect-square">
               {popupNotification.sender?.avatar ? (
@@ -246,7 +238,6 @@ export default function GlobalNotificationPopup() {
             </p>
           </div>
 
-          {/* Action buttons */}
           <div className="flex items-center gap-2">
             {popupNotification.type === 'GROUP_INVITE' && popupNotification.status === 'PENDING' && (
               <>

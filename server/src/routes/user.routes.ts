@@ -35,7 +35,6 @@ router.get("/me/friend-requests", requireAuth, getFriendRequests);
 router.get("/me", requireAuth, getCurrentUser);
 router.put("/me", requireAuth, updateCurrentUser);
 
-// Friends routes
 router.get("/search", requireAuth, searchUsers);
 router.post("/friends/request/:targetUserId", requireAuth, sendFriendRequest);
 router.post("/friends/cancel/:targetUserId", requireAuth, cancelFriendRequest);

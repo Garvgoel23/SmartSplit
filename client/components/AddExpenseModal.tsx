@@ -44,10 +44,8 @@ const AddExpenseModal: React.FC<Props> = ({ group, onClose, onExpenseCreated }) 
   const { user } = useAuth();
   const { currencySymbol, formatCurrency: fmtCurrency } = useCurrency();
 
-  // ── Step management ────────────────────────────────────────────
   const [step, setStep] = useState<0 | 1 | 2 | 3>(0); // 0 = Smart Input
 
-  // ── Smart Input state ──────────────────────────────────────────
   const [nlpText, setNlpText] = useState('');
   const [isProcessingAI, setIsProcessingAI] = useState(false);
   const [aiError, setAiError] = useState('');
@@ -55,13 +53,11 @@ const AddExpenseModal: React.FC<Props> = ({ group, onClose, onExpenseCreated }) 
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
-  // ── Determine default paidBy: current user first, then first member ──
   const currentUserMember = group.members.find(
     (m) => m._id === user?.id || m.email === user?.email
   );
   const defaultPaidBy = currentUserMember?._id || group.members[0]?._id || '';
 
-  // ── Sort members so current user appears first in the "Paid by" dropdown ──
   const sortedMembers = [...group.members].sort((a, b) => {
     const aIsCurrentUser = a._id === defaultPaidBy;
     const bIsCurrentUser = b._id === defaultPaidBy;
@@ -70,7 +66,6 @@ const AddExpenseModal: React.FC<Props> = ({ group, onClose, onExpenseCreated }) 
     return 0;
   });
 
-  // ── Step 1 state (Details) ─────────────────────────────────────
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState<number>(0);
   const [category, setCategory] = useState('General');
@@ -79,17 +74,14 @@ const AddExpenseModal: React.FC<Props> = ({ group, onClose, onExpenseCreated }) 
   const [imageHash, setImageHash] = useState<string | undefined>();
   const [merchant, setMerchant] = useState('');
 
-  // ── Step 2 state (Split) ───────────────────────────────────────
   const [splitType, setSplitType] = useState<SplitType>('exact');
   const [participants, setParticipants] = useState<
     { userId: string; amount?: number; percentage?: number; shares?: number }[]
   >([]);
 
-  // ── UI state ───────────────────────────────────────────────────
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  // ── Helpers ────────────────────────────────────────────────────
   const payer = group.members.find((m) => m._id === paidBy);
 
   const canProceedStep1 = description.trim().length > 0 && amount > 0 && paidBy;
@@ -110,7 +102,6 @@ const AddExpenseModal: React.FC<Props> = ({ group, onClose, onExpenseCreated }) 
     return false;
   })();
 
-  // ── AI Smart Input Handlers ────────────────────────────────────
   const processAIResponse = (data: any) => {
     const aiAmount = data.amount || data.total;
     if (aiAmount) setAmount(aiAmount);
@@ -122,11 +113,9 @@ const AddExpenseModal: React.FC<Props> = ({ group, onClose, onExpenseCreated }) 
     if (data.date) setDate(data.date);
     if (data.imageHash) setImageHash(data.imageHash);
     
-    // Auto-advance to details step
     setStep(1);
   };
 
-  // ── Core upload handler (shared by file input & drag-and-drop) ──
   const processFileUpload = useCallback(async (file: File) => {
     setIsProcessingAI(true);
     setAiError('');
@@ -173,7 +162,6 @@ const AddExpenseModal: React.FC<Props> = ({ group, onClose, onExpenseCreated }) 
     processFileUpload(file);
   };
 
-  // ── Drag-and-drop handlers ──────────────────────────────────────
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -225,7 +213,6 @@ const AddExpenseModal: React.FC<Props> = ({ group, onClose, onExpenseCreated }) 
     }
   };
 
-  // ── Final Submit ───────────────────────────────────────────────
   const handleSubmit = async () => {
     try {
       setIsSubmitting(true);
@@ -260,7 +247,6 @@ const AddExpenseModal: React.FC<Props> = ({ group, onClose, onExpenseCreated }) 
     }
   };
 
-  // ── Steps Titles ───────────────────────────────────────────────
   const getStepTitle = () => {
     switch(step) {
       case 0: return 'Smart Input';
@@ -270,14 +256,12 @@ const AddExpenseModal: React.FC<Props> = ({ group, onClose, onExpenseCreated }) 
     }
   };
 
-  // ── Render ─────────────────────────────────────────────────────
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
       <div
         className="w-full max-w-2xl bg-[#121214] border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* ── Header ─────────────────────────────────────────── */}
         <div className="flex items-center justify-between p-6 border-b border-white/5 bg-white/5">
           <div>
             <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-3">
@@ -310,7 +294,6 @@ const AddExpenseModal: React.FC<Props> = ({ group, onClose, onExpenseCreated }) 
         )}
 
         <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
-          {/* ── Step 0: Smart Input ────────────────────────── */}
           {step === 0 && (
             <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
               {aiError && (
@@ -416,7 +399,6 @@ const AddExpenseModal: React.FC<Props> = ({ group, onClose, onExpenseCreated }) 
             </div>
           )}
 
-          {/* ── Step 1: Expense Details ────────────────────────── */}
           {step === 1 && (
             <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="flex flex-col gap-2">
@@ -501,7 +483,6 @@ const AddExpenseModal: React.FC<Props> = ({ group, onClose, onExpenseCreated }) 
             </div>
           )}
 
-          {/* ── Step 2: Split Method + Inputs ──────────────────── */}
           {step === 2 && (
             <div className="flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500">
               <SplitMethodSelector selected={splitType} onSelect={setSplitType} />
@@ -514,7 +495,6 @@ const AddExpenseModal: React.FC<Props> = ({ group, onClose, onExpenseCreated }) 
             </div>
           )}
 
-          {/* ── Step 3: Review ─────────────────────────────────── */}
           {step === 3 && (
             <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="flex flex-col gap-4">
@@ -578,7 +558,6 @@ const AddExpenseModal: React.FC<Props> = ({ group, onClose, onExpenseCreated }) 
           )}
         </div>
 
-        {/* ── Footer navigation ──────────────────────────────── */}
         <div className="flex items-center justify-between p-6 border-t border-white/5 bg-white/5">
           <div>
             {step > 0 && (

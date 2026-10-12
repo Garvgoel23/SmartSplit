@@ -34,7 +34,6 @@ export default function AddGroupMemberModal({ group, onClose, onMembersAdded }: 
   const [successMessage, setSuccessMessage] = useState('');
   const [error, setError] = useState('');
 
-  // Set of member names / ids
   const existingMemberIds = new Set(
     (group.members || [])
       .map(m => (m._id ? m._id.toString() : ''))
@@ -47,7 +46,6 @@ export default function AddGroupMemberModal({ group, onClose, onMembersAdded }: 
       .filter(Boolean)
   );
 
-  // 1. Ensure invite code is loaded / generated
   useEffect(() => {
     const fetchCode = async () => {
       if (inviteCode) return;
@@ -72,7 +70,6 @@ export default function AddGroupMemberModal({ group, onClose, onMembersAdded }: 
     fetchCode();
   }, [groupId, inviteCode]);
 
-  // 2. Fetch user's friends (ONLY friends can be added to groups)
   useEffect(() => {
     const fetchFriends = async () => {
       try {
@@ -123,14 +120,12 @@ export default function AddGroupMemberModal({ group, onClose, onMembersAdded }: 
     });
   };
 
-  // Filter ONLY within friends list (restricting database-wide access)
   const displayList: MemberCandidate[] = friends.filter(friend =>
     searchQuery.trim() === ''
       ? true
       : friend.fullName.toLowerCase().includes(searchQuery.toLowerCase().trim())
   );
 
-  // 4. Handle submit (sends join request)
   const handleSubmit = async () => {
     if (selectedUserIds.size === 0) return;
     
@@ -208,7 +203,6 @@ export default function AddGroupMemberModal({ group, onClose, onMembersAdded }: 
         )}
 
         <div className="px-6 pt-5">
-          {/* Invite Code Box */}
           <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex flex-col items-center justify-center mb-4 transition-colors">
             <span className="text-[11px] uppercase tracking-wider text-white/50 mb-1 font-bold">Group Invite Code</span>
             <div className="flex items-center gap-3">
@@ -241,7 +235,6 @@ export default function AddGroupMemberModal({ group, onClose, onMembersAdded }: 
             )}
           </div>
           
-          {/* Search within Friends */}
           <div className="relative mb-3">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
             <input 
@@ -253,7 +246,6 @@ export default function AddGroupMemberModal({ group, onClose, onMembersAdded }: 
             />
           </div>
 
-          {/* Friends Selection List */}
           <div className="flex flex-col gap-2 max-h-60 overflow-y-auto custom-scrollbar pr-1 mb-2">
             {loadingFriends ? (
               <div className="py-8 flex flex-col items-center justify-center text-white/40 gap-2">
@@ -325,7 +317,6 @@ export default function AddGroupMemberModal({ group, onClose, onMembersAdded }: 
           </div>
         </div>
 
-        {/* Modal Footer */}
         <div className="p-4 sm:p-5 border-t border-white/5 bg-white/5 flex items-center justify-between gap-3">
           <div className="text-[11px] text-white/40">
             {selectedUserIds.size > 0 

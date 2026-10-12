@@ -48,17 +48,14 @@ export default function FriendsView({ initialFriends }: FriendsViewProps) {
   const [activeTab, setActiveTab] = useState<'friends' | 'requests' | 'find'>('friends');
   const [requestsSubTab, setRequestsSubTab] = useState<'incoming' | 'outgoing'>('incoming');
 
-  // Search states
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
-  // Requests state
   const [incomingRequests, setIncomingRequests] = useState<any[]>([]);
   const [outgoingRequests, setOutgoingRequests] = useState<any[]>([]);
   const [isLoadingRequests, setIsLoadingRequests] = useState(false);
 
-  // Action state
   const [loadingActionId, setLoadingActionId] = useState<string | null>(null);
   const [unfriendConfirmUser, setUnfriendConfirmUser] = useState<FriendItem | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
@@ -70,7 +67,6 @@ export default function FriendsView({ initialFriends }: FriendsViewProps) {
     }, 3500);
   };
 
-  // 1. Fetch friend requests
   const fetchFriendRequests = useCallback(async () => {
     try {
       setIsLoadingRequests(true);
@@ -91,7 +87,6 @@ export default function FriendsView({ initialFriends }: FriendsViewProps) {
     }
   }, []);
 
-  // 2. Fetch friends list
   const fetchFriends = useCallback(async () => {
     try {
       const res = await fetch(`${API_BASE}/users/me/friends`, {
@@ -112,7 +107,6 @@ export default function FriendsView({ initialFriends }: FriendsViewProps) {
     fetchFriendRequests();
   }, [fetchFriendRequests]);
 
-  // 3. Real-time Socket.io event listeners
   useEffect(() => {
     const socket = getSocket();
     const currentUserId = user?.id;
@@ -122,11 +116,9 @@ export default function FriendsView({ initialFriends }: FriendsViewProps) {
     }
 
     const handleStatusChange = (data: { userId: string; status: string; requestId?: string }) => {
-      // Re-fetch friends and requests
       fetchFriends();
       fetchFriendRequests();
 
-      // Update in search results dynamically if present
       setSearchResults(prev =>
         prev.map(item => {
           if (item._id === data.userId) {
@@ -157,7 +149,6 @@ export default function FriendsView({ initialFriends }: FriendsViewProps) {
     };
   }, [user?.id, fetchFriends, fetchFriendRequests]);
 
-  // 4. Search users (Gmails hidden, username/fullName only)
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!searchQuery.trim()) {
@@ -183,7 +174,6 @@ export default function FriendsView({ initialFriends }: FriendsViewProps) {
     }
   };
 
-  // Auto-trigger search when user types (debounced)
   useEffect(() => {
     if (searchQuery.trim().length >= 2) {
       const timer = setTimeout(() => {
@@ -195,7 +185,6 @@ export default function FriendsView({ initialFriends }: FriendsViewProps) {
     }
   }, [searchQuery]);
 
-  // 5. Send Friend Request
   const handleSendRequest = async (targetUserId: string, targetName: string) => {
     setLoadingActionId(targetUserId);
     try {
@@ -225,7 +214,6 @@ export default function FriendsView({ initialFriends }: FriendsViewProps) {
     }
   };
 
-  // 6. Cancel Friend Request
   const handleCancelRequest = async (targetUserId: string, targetName?: string) => {
     setLoadingActionId(targetUserId);
     try {
@@ -251,7 +239,6 @@ export default function FriendsView({ initialFriends }: FriendsViewProps) {
     }
   };
 
-  // 7. Accept Friend Request
   const handleAcceptRequest = async (senderIdOrRequestId: string, senderName?: string) => {
     setLoadingActionId(senderIdOrRequestId);
     try {
@@ -280,7 +267,6 @@ export default function FriendsView({ initialFriends }: FriendsViewProps) {
     }
   };
 
-  // 8. Reject Friend Request
   const handleRejectRequest = async (senderIdOrRequestId: string, senderName?: string) => {
     setLoadingActionId(senderIdOrRequestId);
     try {
@@ -308,7 +294,6 @@ export default function FriendsView({ initialFriends }: FriendsViewProps) {
     }
   };
 
-  // 9. Remove Friend (Unfriend)
   const handleUnfriend = async () => {
     if (!unfriendConfirmUser) return;
     const friendId = unfriendConfirmUser._id;
@@ -340,7 +325,6 @@ export default function FriendsView({ initialFriends }: FriendsViewProps) {
 
   return (
     <div className="flex flex-col gap-6 h-full pb-12">
-      {/* Feedback Toast */}
       {feedbackMessage && (
         <div
           className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-md border animate-in slide-in-from-bottom-5 duration-200 ${
@@ -358,7 +342,6 @@ export default function FriendsView({ initialFriends }: FriendsViewProps) {
         </div>
       )}
 
-      {/* Header and Instagram-style Tabs */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-6">
         <div>
           <h1 className="text-3xl font-extrabold text-white tracking-tight">Friends & Network</h1>
@@ -367,7 +350,6 @@ export default function FriendsView({ initialFriends }: FriendsViewProps) {
           </p>
         </div>
 
-        {/* Tab Controls */}
         <div className="flex bg-[#121214] border border-white/10 rounded-2xl p-1.5 self-start md:self-auto shadow-inner">
           <button
             onClick={() => setActiveTab('friends')}
@@ -415,7 +397,6 @@ export default function FriendsView({ initialFriends }: FriendsViewProps) {
         </div>
       </div>
 
-      {/* TAB 1: ALL FRIENDS */}
       {activeTab === 'friends' && (
         <div className="flex flex-col gap-6">
           <div className="flex items-center justify-between">
@@ -492,7 +473,6 @@ export default function FriendsView({ initialFriends }: FriendsViewProps) {
         </div>
       )}
 
-      {/* TAB 2: REQUESTS (INCOMING & OUTGOING) */}
       {activeTab === 'requests' && (
         <div className="flex flex-col gap-6">
           <div className="flex items-center justify-between border-b border-white/5 pb-4">
@@ -527,7 +507,6 @@ export default function FriendsView({ initialFriends }: FriendsViewProps) {
             </div>
           </div>
 
-          {/* Subtab: Received Incoming Requests */}
           {requestsSubTab === 'incoming' && (
             <div>
               {incomingRequests.length === 0 ? (
@@ -594,7 +573,6 @@ export default function FriendsView({ initialFriends }: FriendsViewProps) {
             </div>
           )}
 
-          {/* Subtab: Sent Outgoing Requests */}
           {requestsSubTab === 'outgoing' && (
             <div>
               {outgoingRequests.length === 0 ? (
@@ -654,7 +632,6 @@ export default function FriendsView({ initialFriends }: FriendsViewProps) {
         </div>
       )}
 
-      {/* TAB 3: FIND FRIENDS (INSTAGRAM-STYLE USER SEARCH) */}
       {activeTab === 'find' && (
         <div className="flex flex-col gap-6">
           <div className="bg-[#121214] border border-white/10 rounded-3xl p-6 sm:p-8 flex flex-col gap-6 shadow-xl relative overflow-hidden">
@@ -669,7 +646,6 @@ export default function FriendsView({ initialFriends }: FriendsViewProps) {
               </p>
             </div>
 
-            {/* Search Input */}
             <form onSubmit={handleSearch} className="relative flex items-center">
               <input
                 type="text"
@@ -690,7 +666,6 @@ export default function FriendsView({ initialFriends }: FriendsViewProps) {
               </button>
             </form>
 
-            {/* Search Results */}
             {searchQuery.trim().length > 0 && (
               <div className="flex flex-col gap-3 pt-2">
                 <div className="flex items-center justify-between text-xs font-bold text-white/40 uppercase tracking-widest px-1">
@@ -719,7 +694,6 @@ export default function FriendsView({ initialFriends }: FriendsViewProps) {
                           key={result._id}
                           className="flex items-center justify-between p-4 bg-white/5 border border-white/5 hover:border-white/10 rounded-2xl transition-all gap-4"
                         >
-                          {/* User info: ONLY Name and Avatar, NO EMAIL */}
                           <div className="flex items-center gap-3.5 min-w-0 flex-1">
                             <div className="w-12 h-12 rounded-full bg-[#1a1a1c] border border-white/10 flex items-center justify-center overflow-hidden shrink-0 aspect-square shadow-inner">
                               {result.avatar ? (
@@ -744,7 +718,6 @@ export default function FriendsView({ initialFriends }: FriendsViewProps) {
                             </div>
                           </div>
 
-                          {/* Dynamic Instagram-style action buttons */}
                           <div className="shrink-0 flex items-center gap-2">
                             {status === 'FRIENDS' && (
                               <div className="flex items-center gap-2">
@@ -812,7 +785,6 @@ export default function FriendsView({ initialFriends }: FriendsViewProps) {
         </div>
       )}
 
-      {/* Unfriend Confirmation Modal */}
       {unfriendConfirmUser && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150"

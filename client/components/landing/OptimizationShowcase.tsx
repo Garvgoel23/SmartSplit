@@ -48,7 +48,6 @@ export default function OptimizationShowcase() {
           </div>
 
           <div className="flex items-center justify-center relative min-h-[300px]">
-            {/* Visualizer ring */}
             <div className="absolute inset-0 flex items-center justify-center">
               <svg className="w-[300px] h-[300px]" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="1" strokeDasharray="2 4" />

@@ -40,7 +40,6 @@ export default function SettleDebtModal({
   const [error, setError] = useState('');
   const { currencySymbol, formatCurrency: fmtCurrency } = useCurrency();
 
-  // Initialise or update form when modal opens or prefill changes
   useEffect(() => {
     if (!isOpen) return;
     setError('');
@@ -50,13 +49,11 @@ export default function SettleDebtModal({
       setReceiverId(prefill.receiverId);
       setAmount(prefill.amount ? prefill.amount.toString() : '');
     } else if (settlements.length > 0) {
-      // Pick first pending settlement
       const first = settlements[0];
       setPayerId(first.from);
       setReceiverId(first.to);
       setAmount(first.amount.toString());
     } else if (balances.length > 1) {
-      // Pick debtor and creditor if available
       const debtor = balances.find(b => b.netAmount < -0.01);
       const creditor = balances.find(b => b.netAmount > 0.01);
       if (debtor) setPayerId(debtor.userId);
@@ -128,7 +125,6 @@ export default function SettleDebtModal({
         className="w-full max-w-lg bg-[#121214] border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-white/5 bg-white/5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[#b2f5d1]/10 border border-[#b2f5d1]/20 flex items-center justify-center text-[#b2f5d1]">
@@ -147,7 +143,6 @@ export default function SettleDebtModal({
           </button>
         </div>
 
-        {/* Content */}
         <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-6 overflow-y-auto custom-scrollbar">
           {error && (
             <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-start gap-2.5">
@@ -156,7 +151,6 @@ export default function SettleDebtModal({
             </div>
           )}
 
-          {/* Quick Settlement Recommendations */}
           {settlements.length > 0 && (
             <div className="flex flex-col gap-2">
               <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">
@@ -191,7 +185,6 @@ export default function SettleDebtModal({
             </div>
           )}
 
-          {/* Payer and Receiver Selection */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">
@@ -230,7 +223,6 @@ export default function SettleDebtModal({
             </div>
           </div>
 
-          {/* Amount */}
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">
               Amount Paid
@@ -249,7 +241,6 @@ export default function SettleDebtModal({
             </div>
           </div>
 
-          {/* Payment Method / Notes */}
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">
               Payment Method / Note
@@ -263,7 +254,6 @@ export default function SettleDebtModal({
             />
           </div>
 
-          {/* Impact preview card */}
           {payerId && receiverId && amount && parseFloat(amount) > 0 && (
             <div className="p-4 rounded-xl bg-[#1a1a1c] border border-[#b2f5d1]/20 flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-[#b2f5d1]/10 flex items-center justify-center text-[#b2f5d1] shrink-0">
@@ -275,7 +265,6 @@ export default function SettleDebtModal({
             </div>
           )}
 
-          {/* Actions */}
           <div className="flex items-center justify-end gap-3 pt-2 border-t border-white/5">
             <button
               type="button"

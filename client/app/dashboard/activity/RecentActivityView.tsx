@@ -48,7 +48,6 @@ export default function RecentActivityView({ initialData }: RecentActivityViewPr
         const notifList = data.data || [];
         setNotifications(notifList);
 
-        // Check if there's any pending unread notification on load to show a popup
         const activePending = notifList.find(
           (n: any) =>
             (n.status === 'PENDING' || n.status === 'PENDING_ADD') && !n.read
@@ -64,7 +63,6 @@ export default function RecentActivityView({ initialData }: RecentActivityViewPr
     fetchNotifs();
   }, [fetchNotifs]);
 
-  // Synchronize with socket and GlobalNotificationPopup events
   useEffect(() => {
     const handleReceived = () => fetchNotifs();
     const handleActionDone = () => fetchNotifs();
@@ -87,7 +85,6 @@ export default function RecentActivityView({ initialData }: RecentActivityViewPr
     };
   }, [fetchNotifs]);
 
-  // Accept Group Invite or Friend Request
   const handleAcceptInvite = async (id: string) => {
     setActionLoadingId(id);
     try {
@@ -111,7 +108,6 @@ export default function RecentActivityView({ initialData }: RecentActivityViewPr
     }
   };
 
-  // Reject / Decline Group Invite or Friend Request
   const handleRejectInvite = async (id: string) => {
     setActionLoadingId(id);
     try {
@@ -134,7 +130,6 @@ export default function RecentActivityView({ initialData }: RecentActivityViewPr
     }
   };
 
-  // Group Owner Confirms Adding Member
   const handleConfirmAddMember = async (id: string) => {
     setActionLoadingId(id);
     try {
@@ -235,7 +230,6 @@ export default function RecentActivityView({ initialData }: RecentActivityViewPr
     return <Activity className="w-5 h-5 text-white/50" />;
   };
 
-  // Reusable Notifications Board Card
   const renderNotificationsCard = () => (
     <div className="bg-[#121214] border border-white/10 rounded-2xl p-5 sm:p-6 shadow-sm">
       <h3 className="text-xs font-bold text-white/50 tracking-widest uppercase mb-4 flex items-center justify-between">
@@ -308,9 +302,7 @@ export default function RecentActivityView({ initialData }: RecentActivityViewPr
                   </div>
                 </div>
 
-                {/* Action buttons based on notification type and status */}
                 <div className="flex items-center flex-wrap gap-2 pt-1 pl-0 sm:pl-10">
-                  {/* Invited Friend: Accept or Decline join request */}
                   {isGroupInvite && notif.status === 'PENDING' && (
                     <>
                       <button
@@ -331,7 +323,6 @@ export default function RecentActivityView({ initialData }: RecentActivityViewPr
                     </>
                   )}
 
-                  {/* Group Owner: Confirm adding member directly to group */}
                   {isOwnerApproval && notif.status === 'PENDING_ADD' && (
                     <button
                       onClick={() => handleConfirmAddMember(notif._id)}
@@ -343,7 +334,6 @@ export default function RecentActivityView({ initialData }: RecentActivityViewPr
                     </button>
                   )}
 
-                  {/* Friend Request: Confirm or Delete */}
                   {isFriendReq && notif.status === 'PENDING' && (
                     <>
                       <button
@@ -390,7 +380,6 @@ export default function RecentActivityView({ initialData }: RecentActivityViewPr
 
   return (
     <div className="flex flex-col gap-6 sm:gap-8 h-full relative">
-      {/* Action Toast */}
       {actionMessage && (
         <div className="fixed bottom-6 right-6 z-50 bg-[#121214] border border-[#b2f5d1]/30 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-2.5 animate-in slide-in-from-bottom-5">
           <CheckCircle2 className="w-4 h-4 text-[#b2f5d1]" />
@@ -398,23 +387,18 @@ export default function RecentActivityView({ initialData }: RecentActivityViewPr
         </div>
       )}
 
-      {/* Main Page Header */}
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight mb-1.5">Recent Activity</h1>
         <p className="text-white/50 text-xs sm:text-sm">Your latest shared expenses, group invites, and settlements.</p>
       </div>
 
-      {/* MOBILE RESPONSIVE LAYOUT: Recent Notifications placed UP at the top before expenses */}
       <div className="block lg:hidden">
         {renderNotificationsCard()}
       </div>
 
-      {/* Main Grid: Expenses kept LOWER to notifications on mobile, and side-by-side on desktop */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10">
         
-        {/* Activity / Expenses List (Col 1 & 2 on Desktop) */}
         <div className="lg:col-span-2 flex flex-col gap-6">
-          {/* Header & Filter Controls for Expenses */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-white/5">
             <div>
               <h2 className="text-sm font-bold text-white tracking-wider uppercase">Expenses & Settlements</h2>
@@ -510,14 +494,11 @@ export default function RecentActivityView({ initialData }: RecentActivityViewPr
           )}
         </div>
 
-        {/* Right Col - Desktop Widgets & Balance */}
         <div className="flex flex-col gap-6">
-          {/* DESKTOP LAYOUT ONLY: Notifications card displayed in right column on large screens */}
           <div className="hidden lg:block">
             {renderNotificationsCard()}
           </div>
 
-          {/* Total Balance */}
           <div className="bg-[#121214] border border-white/10 rounded-2xl p-6 relative overflow-hidden shadow-sm">
              <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-[50px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
              
@@ -542,7 +523,6 @@ export default function RecentActivityView({ initialData }: RecentActivityViewPr
              </div>
           </div>
 
-          {/* Frequent Connections */}
           <div className="bg-[#121214] border border-white/10 rounded-2xl p-6 shadow-sm">
              <h3 className="text-xs font-bold text-white/50 tracking-widest uppercase mb-6">Frequent Connections</h3>
              

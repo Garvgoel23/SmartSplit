@@ -18,7 +18,6 @@ interface Props {
   members: Member[];
   splitType: SplitType;
   totalAmount: number;
-  /** Called whenever the participant split values change. */
   onChange: (
     participants: { userId: string; amount?: number; percentage?: number; shares?: number }[]
   ) => void;
@@ -31,13 +30,11 @@ const SplitInputPanel: React.FC<Props> = ({
   onChange,
 }) => {
   const { currencySymbol, formatCurrency } = useCurrency();
-  // ── Local state per participant ────────────────────────────────
   const [participants, setParticipants] = useState<ParticipantState[]>([]);
   const [preview, setPreview] = useState<ComputedSplit[]>([]);
   const [previewError, setPreviewError] = useState('');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Initialise / reset when members or splitType change
   useEffect(() => {
     const initial: ParticipantState[] = members.map((m) => ({
       userId: m._id,
@@ -50,7 +47,6 @@ const SplitInputPanel: React.FC<Props> = ({
     setPreview([]);
     setPreviewError('');
 
-    // Emit these initial values to the parent immediately!
     const payload = initial.map((p) => {
       switch (splitType) {
         case 'equal':
@@ -66,7 +62,6 @@ const SplitInputPanel: React.FC<Props> = ({
     onChange(payload);
   }, [members, splitType]);
 
-  // ── Emit changes to parent ─────────────────────────────────────
   const emitChange = useCallback(
     (parts: ParticipantState[]) => {
       const payload = parts.map((p) => {
@@ -86,7 +81,6 @@ const SplitInputPanel: React.FC<Props> = ({
     [splitType, onChange]
   );
 
-  // ── Live preview via API (debounced) ───────────────────────────
   useEffect(() => {
     if (totalAmount <= 0 || participants.length === 0) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -123,7 +117,6 @@ const SplitInputPanel: React.FC<Props> = ({
     };
   }, [participants, splitType, totalAmount]);
 
-  // ── Helpers ────────────────────────────────────────────────────
   const update = (index: number, field: keyof ParticipantState, value: number) => {
     setParticipants((prev) => {
       const next = [...prev];
@@ -138,7 +131,6 @@ const SplitInputPanel: React.FC<Props> = ({
     return entry ? entry.amount : null;
   };
 
-  // ── Validation indicators ──────────────────────────────────────
   const sumAmounts = participants.reduce((s, p) => s + p.amount, 0);
   const sumPct = participants.reduce((s, p) => s + p.percentage, 0);
   const totalShares = participants.reduce((s, p) => s + p.shares, 0);
@@ -161,10 +153,8 @@ const SplitInputPanel: React.FC<Props> = ({
         ? `${sumPct.toFixed(1)}% / 100%`
         : `${totalShares} total share${totalShares !== 1 ? 's' : ''}`;
 
-  // ── Render ─────────────────────────────────────────────────────
   return (
     <div className="bg-[#1a1a1c] border border-white/10 rounded-xl overflow-hidden mt-6">
-      {/* Header */}
       <div className="grid grid-cols-12 gap-4 px-5 py-3 border-b border-white/5 bg-white/5 text-xs font-bold uppercase tracking-wider text-white/50">
         <div className="col-span-5">Participant</div>
         <div className="col-span-4 text-center">
@@ -179,13 +169,11 @@ const SplitInputPanel: React.FC<Props> = ({
         <div className="col-span-3 text-right">Owes</div>
       </div>
 
-      {/* Per-participant rows */}
       <div className="divide-y divide-white/5">
         {participants.map((p, i) => {
           const previewAmt = getPreviewAmount(p.userId);
           return (
             <div key={p.userId} className="grid grid-cols-12 gap-4 px-5 py-4 items-center">
-              {/* Avatar + name */}
               <div className="col-span-5 flex items-center gap-3 min-w-0">
                 <div className="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full bg-white/10 flex items-center justify-center text-sm font-bold text-[#b2f5d1] shrink-0 aspect-square">
                   {p.name.charAt(0).toUpperCase()}
@@ -193,7 +181,6 @@ const SplitInputPanel: React.FC<Props> = ({
                 <span className="text-sm font-semibold text-white break-words min-w-0">{p.name}</span>
               </div>
 
-              {/* Input control */}
               <div className="col-span-4 flex justify-center">
                 {splitType === 'equal' && (
                   <span className="text-sm text-white/50 italic py-2">Equal share</span>
@@ -254,7 +241,6 @@ const SplitInputPanel: React.FC<Props> = ({
                 )}
               </div>
 
-              {/* Computed amount */}
               <div className="col-span-3 text-right">
                 {previewAmt !== null ? (
                   <span className="text-sm font-bold text-[#b2f5d1]">{formatCurrency(previewAmt)}</span>
@@ -267,7 +253,6 @@ const SplitInputPanel: React.FC<Props> = ({
         })}
       </div>
 
-      {/* Validation footer */}
       <div className={`flex items-center gap-2 px-5 py-4 border-t border-white/5 text-sm font-semibold transition-colors ${isValid ? 'bg-[#b2f5d1]/5 text-[#b2f5d1]' : 'bg-red-500/5 text-red-400'}`}>
         {isValid ? (
           <CheckCircle2 size={16} />

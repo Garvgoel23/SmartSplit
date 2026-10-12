@@ -42,7 +42,6 @@ export const acceptInvite = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Notification already processed" });
     }
 
-    // Handle FRIEND_REQUEST notification acceptance
     if (notification.type === "FRIEND_REQUEST") {
       const senderUser = await User.findById(notification.sender);
       if (!senderUser) return res.status(404).json({ error: "Sender user not found" });
@@ -87,7 +86,6 @@ export const acceptInvite = async (req: Request, res: Response) => {
       return res.json({ success: true, message: "Friend request accepted" });
     }
 
-    // Handle GROUP_INVITE notification acceptance
     if (notification.type === "GROUP_INVITE") {
       const group = await Group.findById(notification.group);
       if (!group) return res.status(404).json({ error: "Group not found" });
@@ -96,8 +94,6 @@ export const acceptInvite = async (req: Request, res: Response) => {
       notification.read = true;
       await notification.save();
 
-      // Create notification for the group owner/inviter showing user accepted the request
-      // and group owner now gets access to add them directly
       const ownerNotification = await Notification.create({
         recipient: notification.sender,
         sender: currentUser._id,
@@ -194,7 +190,6 @@ export const confirmAddMember = async (req: Request, res: Response) => {
     const friendUser = await User.findById(notification.sender);
     if (!friendUser) return res.status(404).json({ error: "Friend user not found" });
 
-    // Verify authorized: group creator or member
     const isAuthorized =
       group.createdBy === currentUser._id.toString() ||
       group.members.some(
@@ -232,7 +227,6 @@ export const confirmAddMember = async (req: Request, res: Response) => {
     notification.read = true;
     await notification.save();
 
-    // Create a GROUP_JOINED notification for the accepted friend
     const joinedNotification = await Notification.create({
       recipient: friendUser._id,
       sender: currentUser._id,

@@ -133,14 +133,11 @@ export const updateSecuritySettings = async (req: Request, res: Response) => {
   }
 };
 
-// Unified helper to calculate net debt, credit, and balances for a user
 async function calculateUserFinancials(userId: string, userEmail: string, userPhone: string) {
-  // 1. Purge any orphan expenses belonging to deleted groups
   const allActiveGroups = await Group.find({}).select("_id").lean();
   const allActiveGroupIds = allActiveGroups.map(g => g._id);
   await Expense.deleteMany({ group: { $nin: allActiveGroupIds } });
 
-  // 2. Query groups current user belongs to
   const cleanEmail = (userEmail || "").toLowerCase().trim();
   const cleanPhone = (userPhone || "").trim();
 
@@ -154,7 +151,6 @@ async function calculateUserFinancials(userId: string, userEmail: string, userPh
 
   const groupIds = userGroups.map(g => g._id);
 
-  // 3. User alias set (handles member subdocument IDs belonging to current user)
   const myIdSet = new Set<string>([userId]);
   for (const group of userGroups) {
     for (const m of group.members) {
@@ -166,7 +162,6 @@ async function calculateUserFinancials(userId: string, userEmail: string, userPh
     }
   }
 
-  // 4. Name and ID mapping for all members
   const memberNameMap = new Map<string, string>();
   const memberGroupMap = new Map<string, string>();
   const memberIdToUserId = new Map<string, string>();
@@ -190,14 +185,12 @@ async function calculateUserFinancials(userId: string, userEmail: string, userPh
     }
   }
 
-  // 5. Fetch all expenses for active user groups only
   const allExpenses = await Expense.find({ group: { $in: groupIds } })
     .populate('paidBy', 'fullName email avatar')
     .populate('splits.user', 'fullName email avatar')
     .populate('group', 'name')
     .sort({ date: -1 });
 
-  // 6. Net balances per person
   const personNetMap = new Map<string, {
     canonicalId: string;
     name: string;
@@ -254,7 +247,6 @@ async function calculateUserFinancials(userId: string, userEmail: string, userPh
     }
   }
 
-  // 7. Aggregate net totals
   let totalOwe = 0;
   let totalOwed = 0;
   const groupsOwedSet = new Set<string>();
@@ -285,7 +277,6 @@ async function calculateUserFinancials(userId: string, userEmail: string, userPh
     }
   }
 
-  // 8. Month to date
   let monthShared = 0;
   let monthPaid = 0;
   const now = new Date();
@@ -680,8 +671,6 @@ export const updateCurrentUser = async (req: Request, res: Response) => {
   }
 };
 
-// --- Instagram-style Friend Management ---
-
 export const searchUsers = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
@@ -704,7 +693,6 @@ export const searchUsers = async (req: Request, res: Response) => {
 
     const friendIdStrings = new Set((currentUser.friends || []).map((f: any) => f.toString()));
 
-    // Search by name or email, but only return name and avatar (gmails hidden!)
     const filter: any = {
       _id: { $ne: currentUser._id },
       $or: [
@@ -714,12 +702,10 @@ export const searchUsers = async (req: Request, res: Response) => {
       ]
     };
 
-    // Note: email is explicitly NOT included in select projection to keep gmails hidden
     const rawUsers = await User.find(filter)
       .select('fullName preferredName avatar _id')
       .limit(20);
 
-    // Fetch pending friend requests involving currentUser
     const pendingRequests = await FriendRequest.find({
       $or: [
         { sender: currentUser._id, status: 'PENDING' },
@@ -776,7 +762,6 @@ export const getFriends = async (req: Request, res: Response) => {
     const userId = (req as any).user.id;
     const userEmail = (req as any).user.email;
 
-    // Project only fullName, preferredName, avatar, _id (keeping gmails hidden!)
     const user = await User.findOne({
       $or: [
         { _id: userId },
@@ -806,7 +791,6 @@ export const getFriendRequests = async (req: Request, res: Response) => {
 
     if (!currentUser) return res.status(404).json({ error: "User not found" });
 
-    // Incoming requests for current user (emails hidden)
     const incoming = await FriendRequest.find({
       recipient: currentUser._id,
       status: "PENDING"
@@ -814,7 +798,6 @@ export const getFriendRequests = async (req: Request, res: Response) => {
       .sort({ createdAt: -1 })
       .populate("sender", "fullName preferredName avatar _id");
 
-    // Outgoing requests sent by current user (emails hidden)
     const outgoing = await FriendRequest.find({
       sender: currentUser._id,
       status: "PENDING"
@@ -854,7 +837,6 @@ export const sendFriendRequest = async (req: Request, res: Response) => {
     const targetUser = await User.findById(targetUserId);
     if (!targetUser) return res.status(404).json({ error: "Target user not found" });
 
-    // Check if already friends
     const isAlreadyFriend = (currentUser.friends || []).some(
       (f: any) => f.toString() === targetUser._id.toString()
     );
@@ -862,7 +844,6 @@ export const sendFriendRequest = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "You are already friends with this user" });
     }
 
-    // Check if target has already sent currentUser a pending request -> auto accept!
     const incomingRequest = await FriendRequest.findOne({
       sender: targetUser._id,
       recipient: currentUser._id,
@@ -908,7 +889,6 @@ export const sendFriendRequest = async (req: Request, res: Response) => {
       });
     }
 
-    // Check if outgoing request already exists
     let existingRequest = await FriendRequest.findOne({
       sender: currentUser._id,
       recipient: targetUser._id
@@ -929,7 +909,6 @@ export const sendFriendRequest = async (req: Request, res: Response) => {
       });
     }
 
-    // Create notification for target user
     const notification = await Notification.create({
       recipient: targetUser._id,
       sender: currentUser._id,
@@ -977,7 +956,6 @@ export const cancelFriendRequest = async (req: Request, res: Response) => {
 
     if (!currentUser) return res.status(404).json({ error: "Current user not found" });
 
-    // Cancel friend request
     await FriendRequest.findOneAndDelete({
       $or: [
         { sender: currentUser._id, recipient: targetUserId, status: "PENDING" },
@@ -985,7 +963,6 @@ export const cancelFriendRequest = async (req: Request, res: Response) => {
       ]
     });
 
-    // Remove pending notification
     await Notification.findOneAndDelete({
       recipient: targetUserId,
       sender: currentUser._id,
@@ -1048,13 +1025,11 @@ export const acceptFriendRequest = async (req: Request, res: Response) => {
       $addToSet: { friends: currentUser._id }
     });
 
-    // Mark notification as accepted
     await Notification.findOneAndUpdate(
       { recipient: currentUser._id, sender: request.sender, type: "FRIEND_REQUEST" },
       { status: "ACCEPTED", read: true }
     );
 
-    // Notify original sender
     const acceptedNotif = await Notification.create({
       recipient: request.sender,
       sender: currentUser._id,
@@ -1157,7 +1132,6 @@ export const removeFriend = async (req: Request, res: Response) => {
 
     const targetUser = await User.findById(friendId);
 
-    // Mutually remove
     currentUser.friends = (currentUser.friends || []).filter(
       id => id.toString() !== friendId
     );
@@ -1170,7 +1144,6 @@ export const removeFriend = async (req: Request, res: Response) => {
       await targetUser.save();
     }
 
-    // Clean up any friend requests
     await FriendRequest.deleteMany({
       $or: [
         { sender: currentUser._id, recipient: friendId },
@@ -1194,6 +1167,4 @@ export const removeFriend = async (req: Request, res: Response) => {
   }
 };
 
-// Backwards compatibility alias for addFriend
 export const addFriend = sendFriendRequest;
-
