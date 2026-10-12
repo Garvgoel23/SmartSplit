@@ -839,7 +839,7 @@ export const sendFriendRequest = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
     const userEmail = (req as any).user.email;
-    const { targetUserId } = req.params;
+    const targetUserId = req.params.targetUserId as string;
 
     const currentUser = await User.findOne({
       $or: [{ _id: userId }, { email: userEmail }]
@@ -969,7 +969,7 @@ export const cancelFriendRequest = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
     const userEmail = (req as any).user.email;
-    const { targetUserId } = req.params;
+    const targetUserId = req.params.targetUserId as string;
 
     const currentUser = await User.findOne({
       $or: [{ _id: userId }, { email: userEmail }]
@@ -1017,7 +1017,7 @@ export const acceptFriendRequest = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
     const userEmail = (req as any).user.email;
-    const { targetUserId } = req.params; // Can be targetUserId or requestId
+    const targetUserId = req.params.targetUserId as string; // Can be targetUserId or requestId
 
     const currentUser = await User.findOne({
       $or: [{ _id: userId }, { email: userEmail }]
@@ -1091,7 +1091,7 @@ export const rejectFriendRequest = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
     const userEmail = (req as any).user.email;
-    const { targetUserId } = req.params;
+    const targetUserId = req.params.targetUserId as string;
 
     const currentUser = await User.findOne({
       $or: [{ _id: userId }, { email: userEmail }]
@@ -1118,7 +1118,7 @@ export const rejectFriendRequest = async (req: Request, res: Response) => {
       { status: "REJECTED", read: true }
     );
 
-    const senderId = request ? request.sender.toString() : targetUserId;
+    const senderId: string = request ? request.sender.toString() : targetUserId;
 
     emitToUser(senderId, "friend:status-change", {
       userId: currentUser._id.toString(),
@@ -1144,7 +1144,7 @@ export const removeFriend = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
     const userEmail = (req as any).user.email;
-    const { friendId } = req.params;
+    const friendId = req.params.friendId as string;
 
     const currentUser = await User.findOne({
       $or: [

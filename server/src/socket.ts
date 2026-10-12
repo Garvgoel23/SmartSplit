@@ -108,9 +108,10 @@ export const emitToGroup = (groupId: string, event: string, payload: any) => {
   }
 };
 
-export const emitToUser = (userId: string, event: string, payload: any) => {
-  if (io) {
-    const room = `user:${userId}`;
+export const emitToUser = (userId: string | any, event: string, payload: any) => {
+  if (io && userId) {
+    const idStr = Array.isArray(userId) ? userId[0] : String(userId);
+    const room = `user:${idStr}`;
     io.to(room).emit(event, payload);
     console.log(`[Socket.io] Emitted '${event}' to room '${room}'`);
   }
